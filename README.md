@@ -1,5 +1,5 @@
 # sudo_make_me_a_sandwich
-http://xkcd.com/149/ implementation a GNU Makefile + Jimmy John's online delivery
+http://xkcd.com/149/ implementation as a GNU Makefile + Jimmy John's online delivery
 
 Presently, this Makefile lets you
 0. Order a sub, club or gargantuan sandwich (sorry, no SLIMs)
