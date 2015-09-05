@@ -42,9 +42,13 @@ DRY_RUN=
 # The base URL for Jimmy John's online store
 BASE=https://online.jimmyjohns.com
 
+.ONESHELL:
+.SILENT:
+.PHONY: me a banner TODO
+
 # cURL stuff - don't change unless you know what you're doing
 cURL=curl
-cURL_OPTS = --silent --fail -w '%{response_code}'                                               \
+cURL_OPTS = --silent --fail -w '%{response_code}'                                           \
 	--cookie-jar $(COOKIE_JAR) --cookie $(COOKIE_JAR)                                       \
 	-H api-key:A6750DD1-2F04-463E-8D64-6828AFB6143D                                         \
 	-H 'Accept-Language: en-US,en;q=0.8'                                                    \
@@ -58,11 +62,12 @@ POST=--data @-
 PUT=-T -
 
 # Shut up about which directory we're in
-MAKEFLAGS = --no-print-directory
+MAKEFLAGS += --no-print-directory
 
-.ONESHELL:
-.SILENT:
-.PHONY: me a banner TODO
+ifdef DEBUG
+MAKEFLAGS += DEBUG=$(DEBUG)
+cURL_OPTS += --trace-ascii -
+endif
 
 define TODO
 _ query ADDR2 fields only when the corresponding ADDR1 was also blank
@@ -72,7 +77,7 @@ endef
 ifeq ($(DRY_RUN),)
 TARGETS = banner choose make-cookie-jar place-order submit-order success cleanup-cookie-jar
 else
-TARGETS = banner choose make-cookie-jar place-order cleanup-cookie-jar
+TARGETS = banner choose make-cookie-jar place-order dry-run-success cleanup-cookie-jar
 endif
 
 all:
@@ -88,12 +93,12 @@ ifneq ($(USER),root)
 	echo What? Make it yourself.
 else
 	echo Okay
-	sudo -u $(SUDO_USER) $(MAKE) $(TARGETS)
+	sudo -u $(SUDO_USER) $(MAKE) $(MAKEFLAGS) $(TARGETS)
 endif
 
 else
 	echo Okay
-	$(MAKE) $(TARGETS)
+	$(MAKE) $(MAKEFLAGS) $(TARGETS)
 endif
 
 
@@ -130,7 +135,15 @@ cleanup-cookie-jar:
 	-rm -f $(COOKIE_JAR)
 
 initial-requests:
+	echo
+	echo
+	echo $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)
+	echo
 	$(cURL) $(cURL_OPTS) $(BASE)
+	echo
+	echo
+	echo $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Customer/
+	echo
 	$(cURL) $(cURL_OPTS) $(BASE)/api/Customer/
 
 negotiate-address: CheckForManualAddress ForDeliveryAddress VerifyDeliveryAddress
@@ -339,6 +352,11 @@ success:
 	Your order was placed successfully
 	WINNER
 
+dry-run-success:
+	cat <<WINNER
+	
+	The dry-run completed successfully
+	WINNER
 
 ## The sandwich menus
 sandwich-opts = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
@@ -468,7 +486,7 @@ choose-peppers:
 	$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
 	$(if $(filter-out $(peppers-opts), $(peppers)),
 	 $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
-	$(eval peppers = $(word $(peppers), $(peppers_IDS)))
+	$(eval peppers = $(word $(peppers), $(PEPPERS_IDS)))
 
 choose-peppers-recurse:
 	$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
