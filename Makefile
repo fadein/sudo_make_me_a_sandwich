@@ -70,7 +70,7 @@ _ Support JJ's gift cards
 endef
 
 ifeq ($(DRY_RUN),)
-TARGETS = banner choose make-cookie-jar place-order submit-order cleanup-cookie-jar
+TARGETS = banner choose make-cookie-jar place-order submit-order success cleanup-cookie-jar
 else
 TARGETS = banner choose make-cookie-jar place-order cleanup-cookie-jar
 endif
@@ -332,6 +332,12 @@ submit-order:
 	echo
 	$(cURL) $(cURL_OPTS) $(BASE)/api/Order/Submit/
 	echo
+
+success:
+	cat <<WINNER
+	
+	Your order was placed successfully
+	WINNER
 
 
 ## The sandwich menus
