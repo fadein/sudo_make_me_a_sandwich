@@ -561,7 +561,7 @@ define CHIPS_JSON
       "DisplayText" : "",
       "IsMainCouponItem" : false,
       "ConfirmedSprouts" : false,
-      "Label" : "Erik",
+      "Label" : "",
       "Index" : "",
       "Quantity" : 1,
       "IsQuantityFixed" : false,
