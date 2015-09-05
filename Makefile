@@ -486,7 +486,7 @@ choose-peppers:
 	$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
 	$(if $(filter-out $(peppers-opts), $(peppers)),
 	 $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
-	$(eval peppers = $(word $(peppers), $(peppers_IDS)))
+	$(eval peppers = $(word $(peppers), $(PEPPERS_IDS)))
 
 choose-peppers-recurse:
 	$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
