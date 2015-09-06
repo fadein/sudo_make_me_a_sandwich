@@ -5,6 +5,14 @@
 # element in the JSON sent to you in a response from online.jimmyjohns.com.
 # This is NOT the same as the store number found on your receipt (that would be
 # too easy :)
+#
+# Perhaps the easiest way to discover this ID number is to visit
+# online.jimmyjohns.com in your browser with the developer tools enabled.  Get
+# into the view which shows you each URI request the browser makes as you
+# traverse their pages. Start a delivery order and enter your address. JJ's will
+# ask you to verify your address. The locationId parameter will appear in a GET
+# request to the API/Location/ resource
+# (e.g. https://online.jimmyjohns.com/API/Location/?locationId=2144).
 JJ_LOCATION=
 
 # Delivery address
