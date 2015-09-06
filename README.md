@@ -53,4 +53,4 @@ traverse their pages. Start a delivery order and enter your address. If you
 haven't used this address before, JJ's will ask you to verify your address on a
 page that says "VERIFY ADDRESS". The locationId parameter will appear in a GET
 request to the API/Location/ URI after you click the "CONFIRM ADDRESS" button
-(e.g. https://online.jimmyjohns.com/API/Location/?locationId=2144).
+(e.g. `https://online.jimmyjohns.com/API/Location/?locationId=2144`).
