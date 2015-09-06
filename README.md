@@ -2,6 +2,7 @@
 http://xkcd.com/149/ implementation as a GNU Makefile + Jimmy John's online delivery
 
 Presently, this Makefile lets you:
+
 1. Order a sub, club or gargantuan sandwich (sorry, no SLIMs)
 2. State your preferences of onions, tomatoes and peppers
 3. Choose your favorite Jimmy Chips
