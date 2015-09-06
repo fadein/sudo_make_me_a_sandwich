@@ -51,12 +51,11 @@ DRY_RUN=
 BASE=https://online.jimmyjohns.com
 
 .ONESHELL:
-.SILENT:
 .PHONY: me a banner TODO
 
 # cURL stuff - don't change unless you know what you're doing
 cURL=curl
-cURL_OPTS = --silent --fail -w '%{response_code}'                                           \
+cURL_OPTS = --progress-bar --include --fail -w '%{response_code}'                           \
 	--cookie-jar $(COOKIE_JAR) --cookie $(COOKIE_JAR)                                       \
 	-H api-key:A6750DD1-2F04-463E-8D64-6828AFB6143D                                         \
 	-H 'Accept-Language: en-US,en;q=0.8'                                                    \
@@ -89,30 +88,30 @@ TARGETS = banner choose make-cookie-jar place-order dry-run-success cleanup-cook
 endif
 
 all:
-	echo You must be new here. Go check this out:
-	echo     http://xkcd.com/149/
+	@echo You must be new here. Go check this out:
+	@echo     http://xkcd.com/149/
 
-me a: ; :
+me a: ; @:
 
 sandwich:
 ifneq ($(shell uname), CYGWIN_NT-6.1)
 
 ifneq ($(USER),root)
-	echo What? Make it yourself.
+	@echo What? Make it yourself.
 else
-	echo Okay
+	@echo Okay
 	sudo -u $(SUDO_USER) $(MAKE) $(MAKEFLAGS) $(TARGETS)
 endif
 
 else
-	echo Okay
+	@echo Okay
 	$(MAKE) $(MAKEFLAGS) $(TARGETS)
 endif
 
 
-TODO: ; $(info $(TODO)) :
+TODO: ; $(info $(TODO)) @:
 
-banner: ; $(info $(BANNER)) :
+banner: ; $(info $(BANNER)) @:
 
 define BANNER =
          ________________________  _______________________
@@ -143,24 +142,12 @@ cleanup-cookie-jar:
 	-rm -f $(COOKIE_JAR)
 
 initial-requests:
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)
-	echo
 	$(cURL) $(cURL_OPTS) $(BASE)
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Customer/
-	echo
 	$(cURL) $(cURL_OPTS) $(BASE)/api/Customer/
 
 negotiate-address: CheckForManualAddress ForDeliveryAddress VerifyDeliveryAddress
 CheckForManualAddress VerifyDeliveryAddress: export METHOD=$(POST)
 CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Order/$@/
-	echo
 	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Order/$@/
 	{
 		"City" : "$(DELIV_CITY)",
@@ -180,15 +167,10 @@ CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
 		"Longitude" : 0
 	}
 	JSON
-	echo
 
 
 ForDeliveryAddress: export METHOD=$(POST)
 ForDeliveryAddress: get-delivery-info
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/API/Location/$@/
-	echo
 	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/API/Location/$@/
 	{
 		"City" : "$(DELIV_CITY)",
@@ -208,15 +190,10 @@ ForDeliveryAddress: get-delivery-info
 		"Longitude" : 0
 	}
 	JSON
-	echo
 
 
 schedule: export METHOD=$(POST)
 schedule: get-JJ_LOCATION
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/
-	echo
 	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/
 	{
 		"LocationId" : $(JJ_LOCATION),
@@ -224,14 +201,9 @@ schedule: get-JJ_LOCATION
 		"ScheduleTime" : "ASAP"
 	}
 	JSON
-	echo
 
 put-delivery-address: export METHOD=$(PUT)
 put-delivery-address: get-delivery-info
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
-	echo
 	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
 	{
 		"Zipcode" : "$(DELIV_ZIP)",
@@ -254,15 +226,10 @@ put-delivery-address: get-delivery-info
 		"CacheAddress" : false
 	}
 	JSON
-	echo
 
 # Post your order; sandwich, chips and pickle
 post-items: export METHOD=$(POST)
 post-items: pc-sandwich pc-chips pc-pickle
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/Items/
-	echo
 	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/Items/
 	[
 		{
@@ -276,15 +243,10 @@ post-items: pc-sandwich pc-chips pc-pickle
 		}
 	]
 	JSON
-	echo
 
 # Submit the user's contact information, and opt out of marketing communications
 put-contact-info: export METHOD=$(PUT)
 put-contact-info: get-contact-info
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/ContactInfo/
-	echo
 	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/ContactInfo/
 	{
 		"ContactFirstName" : "$(CONTACT_FIRSTNAME)",
@@ -297,30 +259,20 @@ put-contact-info: get-contact-info
 		"IsAnonymousUser" : true
 	}
 	JSON
-	echo
 
 # Submit the tip
 put-tip: export METHOD=$(PUT)
 put-tip: get-tip-amount
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Payment/Tip/
-	echo
 	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Payment/Tip/
 	{
 	    "TipAmount" : "$(tip-amount)",
 	    "TipType" : "AMOUNT"
 	}
 	JSON
-	echo
 
 # Send off the billing information
 post-payment: export METHOD=$(POST)
 post-payment: get-payment-info
-	echo
-	echo
-	echo $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Payment
-	echo
 	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Payment
 	{
 		"PaymentCode" : "$(PAYMENT_CODE)",
@@ -343,25 +295,19 @@ post-payment: get-payment-info
 		"Amount" : 30.00
 	}
 	JSON
-	echo
 
 # This target clicks the "Submit" button
 submit-order:
-	echo
-	echo
-	echo $(cURL) $(cURL_OPTS) $(BASE)/api/Order/Submit/
-	echo
 	$(cURL) $(cURL_OPTS) $(BASE)/api/Order/Submit/
-	echo
 
 success:
-	cat <<WINNER
+	@cat <<WINNER
 	
 	Your order was placed successfully
 	WINNER
 
 dry-run-success:
-	cat <<WINNER
+	@cat <<WINNER
 	
 	The dry-run completed successfully
 	WINNER
@@ -436,7 +382,7 @@ endef
 pc-sandwich: prompt-sandwich choose-sandwich prompt-customize-sandwich
 
 prompt-sandwich:
-	cat <<SANDWICH
+	@cat <<SANDWICH
 	
 	Choose your sandwich:
 	1)  Pepe                  7)  Smoked Ham Club        13) Gourmet Veggie Club
@@ -449,16 +395,16 @@ prompt-sandwich:
 	SANDWICH
 
 choose-sandwich:
-	$(eval sandwich = $(shell read -p 'sandwich> '; echo $$REPLY))
-	$(if $(filter-out $(sandwich-opts), $(sandwich)),
-	 $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
-	$(eval sandwich = $(word $(sandwich), $(SANDWICH_IDS)))
+	@$(eval sandwich = $(shell read -p 'sandwich> '; echo $$REPLY))
+	@$(if $(filter-out $(sandwich-opts), $(sandwich)),
+	@ $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
+	@$(eval sandwich = $(word $(sandwich), $(SANDWICH_IDS)))
 
 choose-sandwich-recurse:
-	$(eval sandwich = $(shell read -p 'sandwich> '; echo $$REPLY))
-	$(if $(filter-out $(sandwich-opts), $(sandwich)),
-	 $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
-	$(info $(sandwich))
+	@$(eval sandwich = $(shell read -p 'sandwich> '; echo $$REPLY))
+	@$(if $(filter-out $(sandwich-opts), $(sandwich)),
+	@ $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
+	@$(info $(sandwich))
 
 # customizing the sandwich
 prompt-customize-sandwich: customize-sandwich
@@ -483,7 +429,7 @@ peppers-opts = 1 2 3 4
 pc-peppers: prompt-peppers choose-peppers
 
 prompt-peppers:
-	cat <<PEPPERS
+	@cat <<PEPPERS
 	
 	Do you want hot cherry peppers?
 	1) No           3) Regular
@@ -491,16 +437,16 @@ prompt-peppers:
 	PEPPERS
 
 choose-peppers:
-	$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
-	$(if $(filter-out $(peppers-opts), $(peppers)),
-	 $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
-	$(eval peppers = $(word $(peppers), $(PEPPERS_IDS)))
+	@$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
+	@$(if $(filter-out $(peppers-opts), $(peppers)),
+	@ $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
+	@$(eval peppers = $(word $(peppers), $(PEPPERS_IDS)))
 
 choose-peppers-recurse:
-	$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
-	$(if $(filter-out $(peppers-opts), $(peppers)),
-	 $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
-	$(info $(peppers))
+	@$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
+	@$(if $(filter-out $(peppers-opts), $(peppers)),
+	@ $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
+	@$(info $(peppers))
 
 
 ## Tomatoes - the default is Regular Tomatoes
@@ -515,7 +461,7 @@ tomatoes-opts = 1 2 3 4
 pc-tomatoes: prompt-tomatoes choose-tomatoes
 
 prompt-tomatoes:
-	cat <<TOMATOES
+	@cat <<TOMATOES
 	
 	Would you like tomatoes?
 	1) No           3) Regular
@@ -523,17 +469,16 @@ prompt-tomatoes:
 	TOMATOES
 
 choose-tomatoes:
-	$(eval tomatoes = $(shell read -p 'tomatoes> '; echo $$REPLY))
-	$(if $(filter-out $(tomatoes-opts), $(tomatoes)),
-	 $(eval tomatoes = $(shell $(MAKE) choose-tomatoes-recurse)))
-	$(eval tomatoes = $(word $(tomatoes), $(TOMATOES_IDS)))
+	@$(eval tomatoes = $(shell read -p 'tomatoes> '; echo $$REPLY))
+	@$(if $(filter-out $(tomatoes-opts), $(tomatoes)),
+	@ $(eval tomatoes = $(shell $(MAKE) choose-tomatoes-recurse)))
+	@$(eval tomatoes = $(word $(tomatoes), $(TOMATOES_IDS)))
 
 choose-tomatoes-recurse:
-	$(eval tomatoes = $(shell read -p 'tomatoes> '; echo $$REPLY))
-	$(if $(filter-out $(tomatoes-opts), $(tomatoes)),
-	 $(eval tomatoes = $(shell $(MAKE) choose-tomatoes-recurse)))
-	$(info $(tomatoes))
-
+	@$(eval tomatoes = $(shell read -p 'tomatoes> '; echo $$REPLY))
+	@$(if $(filter-out $(tomatoes-opts), $(tomatoes)),
+	@ $(eval tomatoes = $(shell $(MAKE) choose-tomatoes-recurse)))
+	@$(info $(tomatoes))
 
 ## Onions - the default is No Onions
 onions = 23559
@@ -547,24 +492,24 @@ onions-opts = 1 2 3 4
 pc-onions: prompt-onions choose-onions
 
 prompt-onions:
-	cat <<ONIONS
-	
-	How about onions?
-	1) No           3) Regular
-	2) Go easy      4) Extra
-	ONIONS
+	@cat <<ONIONS
+	@
+	@How about onions?
+	@1) No           3) Regular
+	@2) Go easy      4) Extra
+	@ONIONS
 
 choose-onions:
-	$(eval onions = $(shell read -p 'onions> '; echo $$REPLY))
-	$(if $(filter-out $(onions-opts), $(onions)),
-	 $(eval onions = $(shell $(MAKE) choose-onions-recurse)))
-	$(eval onions = $(word $(onions), $(ONIONS_IDS)))
+	@$(eval onions = $(shell read -p 'onions> '; echo $$REPLY))
+	@$(if $(filter-out $(onions-opts), $(onions)),
+	@ $(eval onions = $(shell $(MAKE) choose-onions-recurse)))
+	@$(eval onions = $(word $(onions), $(ONIONS_IDS)))
 
 choose-onions-recurse:
-	$(eval onions = $(shell read -p 'onions> '; echo $$REPLY))
-	$(if $(filter-out $(onions-opts), $(onions)),
-	 $(eval onions = $(shell $(MAKE) choose-onions-recurse)))
-	$(info $(onions))
+	@$(eval onions = $(shell read -p 'onions> '; echo $$REPLY))
+	@$(if $(filter-out $(onions-opts), $(onions)),
+	@ $(eval onions = $(shell $(MAKE) choose-onions-recurse)))
+	@$(info $(onions))
 
 
 ## Selecting your chips
@@ -610,7 +555,7 @@ endef
 pc-chips: prompt-chips choose-chips
 
 prompt-chips:
-	cat <<CHIPS
+	@cat <<CHIPS
 	
 	Choose your chips:
 	0) None                 3) BBQ
@@ -619,17 +564,17 @@ prompt-chips:
 	CHIPS
 
 choose-chips:
-	$(eval chips = $(shell read -p 'chips> '; echo $$REPLY))
-	$(if $(filter-out $(chips-opts), $(chips)),
-	 $(eval chips = $(shell $(MAKE) choose-chips-recurse)))
-	$(eval chips = $(subst 0,,$(chips)))
-	$(if $(chips), $(eval chips = $(word $(chips), $(CHIPS_IDS))))
+	@$(eval chips = $(shell read -p 'chips> '; echo $$REPLY))
+	@$(if $(filter-out $(chips-opts), $(chips)),
+	@ $(eval chips = $(shell $(MAKE) choose-chips-recurse)))
+	@$(eval chips = $(subst 0,,$(chips)))
+	@$(if $(chips), $(eval chips = $(word $(chips), $(CHIPS_IDS))))
 
 choose-chips-recurse:
-	$(eval chips = $(shell read -p 'chips> '; echo $$REPLY))
-	$(if $(filter-out $(chips-opts), $(chips)),
-	 $(eval chips = $(shell $(MAKE) choose-chips-recurse)))
-	$(info $(chips))
+	@$(eval chips = $(shell read -p 'chips> '; echo $$REPLY))
+	@$(if $(filter-out $(chips-opts), $(chips)),
+	@ $(eval chips = $(shell $(MAKE) choose-chips-recurse)))
+	@$(info $(chips))
 
 
 
@@ -676,7 +621,7 @@ endef
 pc-pickle: prompt-pickle choose-pickle
 
 prompt-pickle:
-	cat <<PICKLE
+	@cat <<PICKLE
 	
 	Do you want a pickle?
 	0) None                 2) Halved
@@ -684,25 +629,25 @@ prompt-pickle:
 	PICKLE
 
 choose-pickle:
-	$(eval pickle = $(shell read -p 'pickle> '; echo $$REPLY))
-	$(if $(filter-out $(pickle-opts), $(pickle)),
-	 $(eval pickle = $(shell $(MAKE) choose-pickle-recurse)))
-	$(eval pickle = $(subst 0,,$(pickle)))
-	$(if $(pickle), $(eval pickle = $(word $(pickle), $(PICKLE_IDS))))
+	@$(eval pickle = $(shell read -p 'pickle> '; echo $$REPLY))
+	@$(if $(filter-out $(pickle-opts), $(pickle)),
+	@ $(eval pickle = $(shell $(MAKE) choose-pickle-recurse)))
+	@$(eval pickle = $(subst 0,,$(pickle)))
+	@$(if $(pickle), $(eval pickle = $(word $(pickle), $(PICKLE_IDS))))
 
 choose-pickle-recurse:
-	$(eval pickle = $(shell read -p 'pickle> '; echo $$REPLY))
-	$(if $(filter-out $(pickle-opts), $(pickle)),
-	 $(eval pickle = $(shell $(MAKE) choose-pickle-recurse)))
-	$(info $(pickle))
+	@$(eval pickle = $(shell read -p 'pickle> '; echo $$REPLY))
+	@$(if $(filter-out $(pickle-opts), $(pickle)),
+	@ $(eval pickle = $(shell $(MAKE) choose-pickle-recurse)))
+	@$(info $(pickle))
 
 
 get-tip-amount:
-	$(if $(tip-amount), ,
-	 $(eval tip-amount = $(shell read -p "Tip amount $$"; echo $$REPLY | tr -d '$$'))
-	 $(if $(strip $(tip-amount)), ,
-	  $(eval tip-amount = $(shell $(MAKE) get-tip-amount)))
-	 $(info $(tip-amount)))
+	@$(if $(tip-amount), ,
+	@ $(eval tip-amount = $(shell read -p "Tip amount $$"; echo $$REPLY | tr -d '$$'))
+	@ $(if $(strip $(tip-amount)), ,
+	@  $(eval tip-amount = $(shell $(MAKE) get-tip-amount)))
+	@ $(info $(tip-amount)))
 
 
 define CC_TYPE_TABLE
