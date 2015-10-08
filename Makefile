@@ -361,7 +361,13 @@ define SANDWICH_JSON
          {
             "EditItem" : false,
             "GroupId" : "3021",
-            "SelectedAnswerId" : "$(onions)",
+            "SelectedAnswerId" : "$(onions3021)",
+            "SelectedAnswerText" : ""
+         },
+         {
+            "EditItem" : false,
+            "GroupId" : "3020",
+            "SelectedAnswerId" : "$(onions3020)",
             "SelectedAnswerText" : ""
          },
          {
@@ -481,10 +487,15 @@ choose-tomatoes-recurse:
 	@$(info $(tomatoes))
 
 ## Onions - the default is No Onions
-onions = 23559
+onions3021 = 23559
+onions3020 = 23311
 
-define ONIONS_IDS
+define ONIONS3021_IDS
 	23559 23314 23312 23315
+endef
+
+define ONIONS3020_IDS
+	23311 23314 23313 23315
 endef
 
 onions-opts = 1 2 3 4
@@ -503,7 +514,8 @@ choose-onions:
 	@$(eval onions = $(shell read -p 'onions> '; echo $$REPLY))
 	@$(if $(filter-out $(onions-opts), $(onions)),
 	@ $(eval onions = $(shell $(MAKE) choose-onions-recurse)))
-	@$(eval onions = $(word $(onions), $(ONIONS_IDS)))
+	@$(eval onions3020 = $(word $(onions), $(ONIONS3020_IDS)))
+	@$(eval onions3021 = $(word $(onions), $(ONIONS3021_IDS)))
 
 choose-onions-recurse:
 	@$(eval onions = $(shell read -p 'onions> '; echo $$REPLY))
