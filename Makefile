@@ -1,3 +1,27 @@
+# The MIT License (MIT)
+#
+# v1.0 Copyright (c) 2015 Erik Falor
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+
 ## Configuration items
 ## Hardcode values for questions you don't want to be asked each on each order
 
@@ -121,12 +145,13 @@ define BANNER =
       {{ {{ {{ {{ {{ {{  {{   {{   }}  }} {{ {{ }} {{ { }} }}
        {{ {{ {{~~~ {~~{{~~{{`~~,}}  }}  }} }} {{ }} {{ }} }}
      {{ {{ {{~~~~~~~~~  {{`~~,}}  }} ,~~~~~'  `~~~~~, } }}
-         `~~~~~' `~~'   `~~   ~~~`~~~ (=======) `~~, (===)~~`
-     `~~~~~(=========) ~~~~~~`  ,~~~~~~`    (=====) ,~~~~`
-      (=======)~___~(=====)~~___ _~~(=========)~~__~~(======)
-       (  .   .         .  ,   `;       .      ,         )
-        (        ,          .   ;     ,           .     )
-         (_____________________,_______________________)
+         `~~~~~' `~~'   `~~   ~~~`~~~ (=======) `~~, (===)~~` __   ___
+     `~~~~~(=========) ~~~~~~`  ,~~~~~~`    (=====) ,~~~~`   /_ | / _ \ 
+      (=======)~___~(=====)~~___ _~~(=========)~~__~~(======)_| || | | |
+       (  .   .         .  ,   `;       .      ,         )\ / / || | | |
+        (        ,          .   ;     ,           .     )\ V /| || |_| |
+         (_____________________,_______________________)  \_/ |_(_)___/
+            use ctrl-c to exit
 endef
 
 choose: pc-sandwich pc-chips pc-pickle get-JJ_LOCATION get-delivery-info get-contact-info get-payment-info
@@ -672,166 +697,166 @@ define CC_TYPE_IDS
 endef
 
 get-CC_TYPE:
-	$(if $(CC_TYPE), ,
-	 $(info $(CC_TYPE_TABLE))
-	 $(eval CC_TYPE = $(word $(shell $(MAKE) choose-CC_TYPE), $(CC_TYPE_IDS))))
+	@$(if $(CC_TYPE), ,
+	@ $(info $(CC_TYPE_TABLE))
+	@ $(eval CC_TYPE = $(word $(shell $(MAKE) choose-CC_TYPE), $(CC_TYPE_IDS))))
 
 choose-CC_TYPE:
-	$(eval CC_TYPE = $(shell read -p 'Credit card Type> '; echo $$REPLY))
-	$(if $(filter-out 1 2 3 4 5, $(CC_TYPE)),
-	 $(eval CC_TYPE = $(shell $(MAKE) choose-CC_TYPE)))
-	 $(info $(CC_TYPE))
+	@$(eval CC_TYPE = $(shell read -p 'Credit card Type> '; echo $$REPLY))
+	@$(if $(filter-out 1 2 3 4 5, $(CC_TYPE)),
+	@ $(eval CC_TYPE = $(shell $(MAKE) choose-CC_TYPE)))
+	@ $(info $(CC_TYPE))
 
 
 get-JJ_LOCATION:
-	$(if $(JJ_LOCATION), ,
-	 $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
-	 $(if $(strip $(JJ_LOCATION)), ,
-	  $(eval JJ_LOCATION = $(shell $(MAKE) get-JJ_LOCATION))))
+	@$(if $(JJ_LOCATION), ,
+	@ $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
+	@ $(if $(strip $(JJ_LOCATION)), ,
+	@  $(eval JJ_LOCATION = $(shell $(MAKE) get-JJ_LOCATION))))
 
 
 get-DELIV_ADDR1:
-	$(if $(DELIV_ADDR1), ,
-	 $(eval DELIV_ADDR1 = $(shell read -p "Delivery address 1> "; echo $$REPLY))
-	 $(if $(strip $(DELIV_ADDR1)), ,
-	  $(eval DELIV_ADDR1 = $(shell $(MAKE) get-DELIV_ADDR1))))
+	@$(if $(DELIV_ADDR1), ,
+	@ $(eval DELIV_ADDR1 = $(shell read -p "Delivery address 1> "; echo $$REPLY))
+	@ $(if $(strip $(DELIV_ADDR1)), ,
+	@  $(eval DELIV_ADDR1 = $(shell $(MAKE) get-DELIV_ADDR1))))
 
 
 get-DELIV_ADDR2:
-	$(if $(DELIV_ADDR2), ,
-	 $(eval DELIV_ADDR2 = $(shell read -p "Delivery address 2> "; echo $$REPLY))
-	 $(if $(strip $(DELIV_ADDR2)), ,
-	  $(eval DELIV_ADDR2 = $(shell $(MAKE) get-DELIV_ADDR2))))
+	@$(if $(DELIV_ADDR2), ,
+	@ $(eval DELIV_ADDR2 = $(shell read -p "Delivery address 2> "; echo $$REPLY))
+	@ $(if $(strip $(DELIV_ADDR2)), ,
+	@  $(eval DELIV_ADDR2 = $(shell $(MAKE) get-DELIV_ADDR2))))
 
 
 get-DELIV_CITY:
-	$(if $(DELIV_CITY), ,
-	 $(eval DELIV_CITY = $(shell read -p "Delivery city> "; echo $$REPLY))
-	 $(if $(strip $(DELIV_CITY)), ,
-	  $(eval DELIV_CITY = $(shell $(MAKE) get-DELIV_CITY))))
+	@$(if $(DELIV_CITY), ,
+	@ $(eval DELIV_CITY = $(shell read -p "Delivery city> "; echo $$REPLY))
+	@ $(if $(strip $(DELIV_CITY)), ,
+	@  $(eval DELIV_CITY = $(shell $(MAKE) get-DELIV_CITY))))
 
 
 get-DELIV_STATE:
-	$(if $(DELIV_STATE), ,
-	 $(eval DELIV_STATE = $(shell read -p "Delivery state> "; echo $$REPLY))
-	 $(if $(strip $(DELIV_STATE)), ,
-	  $(eval DELIV_STATE = $(shell $(MAKE) get-DELIV_STATE))))
+	@$(if $(DELIV_STATE), ,
+	@ $(eval DELIV_STATE = $(shell read -p "Delivery state> "; echo $$REPLY))
+	@ $(if $(strip $(DELIV_STATE)), ,
+	@  $(eval DELIV_STATE = $(shell $(MAKE) get-DELIV_STATE))))
 
 
 get-DELIV_ZIP:
-	$(if $(DELIV_ZIP), ,
-	 $(eval DELIV_ZIP = $(shell read -p "Delivery ZIP> "; echo $$REPLY))
-	 $(if $(strip $(DELIV_ZIP)), ,
-	  $(eval DELIV_ZIP = $(shell $(MAKE) get-DELIV_ZIP))))
+	@$(if $(DELIV_ZIP), ,
+	@ $(eval DELIV_ZIP = $(shell read -p "Delivery ZIP> "; echo $$REPLY))
+	@ $(if $(strip $(DELIV_ZIP)), ,
+	@  $(eval DELIV_ZIP = $(shell $(MAKE) get-DELIV_ZIP))))
 
 
 get-DELIV_COUNTRY:
-	$(if $(DELIV_COUNTRY), ,
-	 $(eval DELIV_COUNTRY = $(shell read -p "Delivery country> "; echo $$REPLY))
-	 $(if $(strip $(DELIV_COUNTRY)), ,
-	  $(eval DELIV_COUNTRY = $(shell $(MAKE) get-DELIV_COUNTRY))))
+	@$(if $(DELIV_COUNTRY), ,
+	@ $(eval DELIV_COUNTRY = $(shell read -p "Delivery country> "; echo $$REPLY))
+	@ $(if $(strip $(DELIV_COUNTRY)), ,
+	@  $(eval DELIV_COUNTRY = $(shell $(MAKE) get-DELIV_COUNTRY))))
 
 
 get-CONTACT_FIRSTNAME:
-	$(if $(CONTACT_FIRSTNAME), ,
-	 $(eval CONTACT_FIRSTNAME = $(shell read -p "Your first name> "; echo $$REPLY))
-	 $(if $(strip $(CONTACT_FIRSTNAME)), ,
-	  $(eval CONTACT_FIRSTNAME = $(shell $(MAKE) get-CONTACT_FIRSTNAME))))
+	@$(if $(CONTACT_FIRSTNAME), ,
+	@ $(eval CONTACT_FIRSTNAME = $(shell read -p "Your first name> "; echo $$REPLY))
+	@ $(if $(strip $(CONTACT_FIRSTNAME)), ,
+	@  $(eval CONTACT_FIRSTNAME = $(shell $(MAKE) get-CONTACT_FIRSTNAME))))
 
 
 get-CONTACT_LASTNAME:
-	$(if $(CONTACT_LASTNAME), ,
-	 $(eval CONTACT_LASTNAME = $(shell read -p "Your last name> "; echo $$REPLY))
-	 $(if $(strip $(CONTACT_LASTNAME)), ,
-	  $(eval CONTACT_LASTNAME = $(shell $(MAKE) get-CONTACT_LASTNAME))))
+	@$(if $(CONTACT_LASTNAME), ,
+	@ $(eval CONTACT_LASTNAME = $(shell read -p "Your last name> "; echo $$REPLY))
+	@ $(if $(strip $(CONTACT_LASTNAME)), ,
+	@  $(eval CONTACT_LASTNAME = $(shell $(MAKE) get-CONTACT_LASTNAME))))
 
 
 get-CONTACT_EMAIL:
-	$(if $(CONTACT_EMAIL), ,
-	 $(eval CONTACT_EMAIL = $(shell read -p "Your email address> "; echo $$REPLY))
-	 $(if $(strip $(CONTACT_EMAIL)), ,
-	  $(eval CONTACT_EMAIL = $(shell $(MAKE) get-CONTACT_EMAIL))))
+	@$(if $(CONTACT_EMAIL), ,
+	@ $(eval CONTACT_EMAIL = $(shell read -p "Your email address> "; echo $$REPLY))
+	@ $(if $(strip $(CONTACT_EMAIL)), ,
+	@  $(eval CONTACT_EMAIL = $(shell $(MAKE) get-CONTACT_EMAIL))))
 
 
 get-CONTACT_PHONE:
-	$(if $(CONTACT_PHONE), ,
-	 $(eval CONTACT_PHONE = $(shell read -p "Your phone #> "; echo $$REPLY | tr -d ' ()-.'))
-	 $(if $(strip $(CONTACT_PHONE)), ,
-	  $(eval CONTACT_PHONE = $(shell $(MAKE) get-CONTACT_PHONE))))
+	@$(if $(CONTACT_PHONE), ,
+	@ $(eval CONTACT_PHONE = $(shell read -p "Your phone #> "; echo $$REPLY | tr -d ' ()-.'))
+	@ $(if $(strip $(CONTACT_PHONE)), ,
+	@  $(eval CONTACT_PHONE = $(shell $(MAKE) get-CONTACT_PHONE))))
 
 
 get-PAYMENT_CODE:
-	$(if $(PAYMENT_CODE), ,
-	 $(eval PAYMENT_CODE = $(shell read -p "Payment type> "; echo $$REPLY))
-	 $(if $(strip $(PAYMENT_CODE)), ,
-	  $(eval PAYMENT_CODE = $(shell $(MAKE) get-PAYMENT_CODE))))
+	@$(if $(PAYMENT_CODE), ,
+	@ $(eval PAYMENT_CODE = $(shell read -p "Payment type> "; echo $$REPLY))
+	@ $(if $(strip $(PAYMENT_CODE)), ,
+	@  $(eval PAYMENT_CODE = $(shell $(MAKE) get-PAYMENT_CODE))))
 
 
 get-CC_NUM:
-	$(if $(CC_NUM), ,
-	 $(eval CC_NUM = $(shell read -p "Credit card #> "; echo $$REPLY | tr -d ' -'))
-	 $(if $(strip $(CC_NUM)), ,
-	  $(eval CC_NUM = $(shell $(MAKE) get-CC_NUM))))
+	@$(if $(CC_NUM), ,
+	@ $(eval CC_NUM = $(shell read -p "Credit card #> "; echo $$REPLY | tr -d ' -'))
+	@ $(if $(strip $(CC_NUM)), ,
+	@  $(eval CC_NUM = $(shell $(MAKE) get-CC_NUM))))
 
 
 get-CC_CVV:
-	$(if $(CC_CVV), ,
-	 $(eval CC_CVV = $(shell read -p "CVV security code> "; echo $$REPLY))
-	 $(if $(strip $(CC_CVV)), ,
-	  $(eval CC_CVV = $(shell $(MAKE) get-CC_CVV))))
+	@$(if $(CC_CVV), ,
+	@ $(eval CC_CVV = $(shell read -p "CVV security code> "; echo $$REPLY))
+	@ $(if $(strip $(CC_CVV)), ,
+	@  $(eval CC_CVV = $(shell $(MAKE) get-CC_CVV))))
 
 
 get-CC_YEAR:
-	$(if $(CC_YEAR), ,
-	 $(eval CC_YEAR = $(shell read -p "CC expiration year (4 digits)> "; echo $$REPLY))
-	 $(if $(strip $(CC_YEAR)), ,
-	  $(eval CC_YEAR = $(shell $(MAKE) get-CC_YEAR))))
+	@$(if $(CC_YEAR), ,
+	@ $(eval CC_YEAR = $(shell read -p "CC expiration year (4 digits)> "; echo $$REPLY))
+	@ $(if $(strip $(CC_YEAR)), ,
+	@  $(eval CC_YEAR = $(shell $(MAKE) get-CC_YEAR))))
 
 
 get-CC_MONTH:
-	$(if $(CC_MONTH), ,
-	 $(eval CC_MONTH = $(shell read -p "CC expiration month> "; echo $$REPLY))
-	 $(if $(strip $(CC_MONTH)), ,
-	  $(eval CC_MONTH = $(shell $(MAKE) get-CC_MONTH))))
+	@$(if $(CC_MONTH), ,
+	@ $(eval CC_MONTH = $(shell read -p "CC expiration month> "; echo $$REPLY))
+	@ $(if $(strip $(CC_MONTH)), ,
+	@  $(eval CC_MONTH = $(shell $(MAKE) get-CC_MONTH))))
 
 
 get-CC_ADDR1:
-	$(if $(CC_ADDR1), ,
-	 $(eval CC_ADDR1 = $(shell read -p "Billing address 1> "; echo $$REPLY))
-	 $(if $(strip $(CC_ADDR1)), ,
-	  $(eval CC_ADDR1 = $(shell $(MAKE) get-CC_ADDR1))))
+	@$(if $(CC_ADDR1), ,
+	@ $(eval CC_ADDR1 = $(shell read -p "Billing address 1> "; echo $$REPLY))
+	@ $(if $(strip $(CC_ADDR1)), ,
+	@  $(eval CC_ADDR1 = $(shell $(MAKE) get-CC_ADDR1))))
 
 
 get-CC_ADDR2:
-	$(if $(CC_ADDR2), ,
-	 $(eval CC_ADDR2 = $(shell read -p "Billing address 2> "; echo $$REPLY))
-	 $(if $(strip $(CC_ADDR2)), ,
-	  $(eval CC_ADDR2 = $(shell $(MAKE) get-CC_ADDR2))))
+	@$(if $(CC_ADDR2), ,
+	@ $(eval CC_ADDR2 = $(shell read -p "Billing address 2> "; echo $$REPLY))
+	@ $(if $(strip $(CC_ADDR2)), ,
+	@  $(eval CC_ADDR2 = $(shell $(MAKE) get-CC_ADDR2))))
 
 
 get-CC_CITY:
-	$(if $(CC_CITY), ,
-	 $(eval CC_CITY = $(shell read -p "Billing city> "; echo $$REPLY))
-	 $(if $(strip $(CC_CITY)), ,
-	  $(eval CC_CITY = $(shell $(MAKE) get-CC_CITY))))
+	@$(if $(CC_CITY), ,
+	@ $(eval CC_CITY = $(shell read -p "Billing city> "; echo $$REPLY))
+	@ $(if $(strip $(CC_CITY)), ,
+	@  $(eval CC_CITY = $(shell $(MAKE) get-CC_CITY))))
 
 
 get-CC_STATE:
-	$(if $(CC_STATE), ,
-	 $(eval CC_STATE = $(shell read -p "Billing state> "; echo $$REPLY))
-	 $(if $(strip $(CC_STATE)), ,
-	  $(eval CC_STATE = $(shell $(MAKE) get-CC_STATE))))
+	@$(if $(CC_STATE), ,
+	@ $(eval CC_STATE = $(shell read -p "Billing state> "; echo $$REPLY))
+	@ $(if $(strip $(CC_STATE)), ,
+	@  $(eval CC_STATE = $(shell $(MAKE) get-CC_STATE))))
 
 
 get-CC_ZIP:
-	$(if $(CC_ZIP), ,
-	 $(eval CC_ZIP = $(shell read -p "Billing ZIP> "; echo $$REPLY))
-	 $(if $(strip $(CC_ZIP)), ,
-	  $(eval CC_ZIP = $(shell $(MAKE) get-CC_ZIP))))
+	@$(if $(CC_ZIP), ,
+	@ $(eval CC_ZIP = $(shell read -p "Billing ZIP> "; echo $$REPLY))
+	@ $(if $(strip $(CC_ZIP)), ,
+	@  $(eval CC_ZIP = $(shell $(MAKE) get-CC_ZIP))))
 
 
 get-CC_COUNTRY:
-	$(if $(CC_COUNTRY), ,
-	 $(eval CC_COUNTRY = $(shell read -p "Billing country> "; echo $$REPLY))
-	 $(if $(strip $(CC_COUNTRY)), ,
-	  $(eval CC_COUNTRY = $(shell $(MAKE) get-CC_COUNTRY))))
+	@$(if $(CC_COUNTRY), ,
+	@ $(eval CC_COUNTRY = $(shell read -p "Billing country> "; echo $$REPLY))
+	@ $(if $(strip $(CC_COUNTRY)), ,
+	@  $(eval CC_COUNTRY = $(shell $(MAKE) get-CC_COUNTRY))))
