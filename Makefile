@@ -148,7 +148,7 @@ initial-requests:
 negotiate-address: CheckForManualAddress ForDeliveryAddress VerifyDeliveryAddress
 CheckForManualAddress VerifyDeliveryAddress: export METHOD=$(POST)
 CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
-	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Order/$@/
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Order/$@/
 	{
 		"City" : "$(DELIV_CITY)",
 		"State" : "$(DELIV_STATE)",
@@ -166,12 +166,12 @@ CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
 		"Latitude" : 0,
 		"Longitude" : 0
 	}
-	JSON
+	:
 
 
 ForDeliveryAddress: export METHOD=$(POST)
 ForDeliveryAddress: get-delivery-info
-	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/API/Location/$@/
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/API/Location/$@/
 	{
 		"City" : "$(DELIV_CITY)",
 		"State" : "$(DELIV_STATE)",
@@ -189,22 +189,22 @@ ForDeliveryAddress: get-delivery-info
 		"Latitude" : 0,
 		"Longitude" : 0
 	}
-	JSON
+	:
 
 
 schedule: export METHOD=$(POST)
 schedule: get-JJ_LOCATION
-	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/
 	{
 		"LocationId" : $(JJ_LOCATION),
 		"OrderType" : "Delivery",
 		"ScheduleTime" : "ASAP"
 	}
-	JSON
+	:
 
 put-delivery-address: export METHOD=$(PUT)
 put-delivery-address: get-delivery-info
-	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
 	{
 		"Zipcode" : "$(DELIV_ZIP)",
 		"City" : "$(DELIV_CITY)",
@@ -225,12 +225,12 @@ put-delivery-address: get-delivery-info
 		"GateCode" : "",
 		"CacheAddress" : false
 	}
-	JSON
+	:
 
 # Post your order; sandwich, chips and pickle
 post-items: export METHOD=$(POST)
 post-items: pc-sandwich pc-chips pc-pickle
-	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/Items/
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/Items/
 	[
 		{
 			$(SANDWICH_JSON)
@@ -242,12 +242,12 @@ post-items: pc-sandwich pc-chips pc-pickle
 			$(PICKLE_JSON)
 		}
 	]
-	JSON
+	:
 
 # Submit the user's contact information, and opt out of marketing communications
 put-contact-info: export METHOD=$(PUT)
 put-contact-info: get-contact-info
-	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/ContactInfo/
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/ContactInfo/
 	{
 		"ContactFirstName" : "$(CONTACT_FIRSTNAME)",
 		"ContactLastName" : "$(CONTACT_LASTNAME)",
@@ -258,22 +258,22 @@ put-contact-info: get-contact-info
 		"AcceptedTermsAndConditions" : true,
 		"IsAnonymousUser" : true
 	}
-	JSON
+	:
 
 # Submit the tip
 put-tip: export METHOD=$(PUT)
 put-tip: get-tip-amount
-	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Payment/Tip/
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Payment/Tip/
 	{
 	    "TipAmount" : "$(tip-amount)",
 	    "TipType" : "AMOUNT"
 	}
-	JSON
+	:
 
 # Send off the billing information
 post-payment: export METHOD=$(POST)
 post-payment: get-payment-info
-	cat <<JSON | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Payment
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Payment
 	{
 		"PaymentCode" : "$(PAYMENT_CODE)",
 		"CardHolderName" : "$(CONTACT_FIRSTNAME) $(CONTACT_LASTNAME)",
@@ -294,23 +294,23 @@ post-payment: get-payment-info
 		"GiftCardPinNumber" : "",
 		"Amount" : 30.00
 	}
-	JSON
+	:
 
 # This target clicks the "Submit" button
 submit-order:
 	$(cURL) $(cURL_OPTS) $(BASE)/api/Order/Submit/
 
 success:
-	@cat <<WINNER
+	@cat <<:
 	
 	Your order was placed successfully
-	WINNER
+	:
 
 dry-run-success:
-	@cat <<WINNER
+	@cat <<:
 	
 	The dry-run completed successfully
-	WINNER
+	:
 
 ## The sandwich menus
 sandwich-opts = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
@@ -388,7 +388,7 @@ endef
 pc-sandwich: prompt-sandwich choose-sandwich prompt-customize-sandwich
 
 prompt-sandwich:
-	@cat <<SANDWICH
+	@cat <<:
 	
 	Choose your sandwich:
 	1)  Pepe                  7)  Smoked Ham Club        13) Gourmet Veggie Club
@@ -398,7 +398,7 @@ prompt-sandwich:
 	5)  Vito                  11) Country Club           17) Ultimate Porker
 	6)  The Veggie            12) Beach Club             18) J.J.B.L.T.
 	19) The J.J. Gargantuan
-	SANDWICH
+	:
 
 choose-sandwich:
 	@$(eval sandwich = $(shell read -p 'sandwich> '; echo $$REPLY))
@@ -435,12 +435,12 @@ peppers-opts = 1 2 3 4
 pc-peppers: prompt-peppers choose-peppers
 
 prompt-peppers:
-	@cat <<PEPPERS
+	@cat <<:
 	
 	Do you want hot cherry peppers?
 	1) No           3) Regular
 	2) Go easy      4) Extra
-	PEPPERS
+	:
 
 choose-peppers:
 	@$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
@@ -467,12 +467,12 @@ tomatoes-opts = 1 2 3 4
 pc-tomatoes: prompt-tomatoes choose-tomatoes
 
 prompt-tomatoes:
-	@cat <<TOMATOES
+	@cat <<:
 	
 	Would you like tomatoes?
 	1) No           3) Regular
 	2) Go easy      4) Extra
-	TOMATOES
+	:
 
 choose-tomatoes:
 	@$(eval tomatoes = $(shell read -p 'tomatoes> '; echo $$REPLY))
@@ -503,12 +503,12 @@ onions-opts = 1 2 3 4
 pc-onions: prompt-onions choose-onions
 
 prompt-onions:
-	@cat <<ONIONS
-	@
-	@How about onions?
-	@1) No           3) Regular
-	@2) Go easy      4) Extra
-	@ONIONS
+	@cat <<:
+	
+	How about onions?
+	1) No           3) Regular
+	2) Go easy      4) Extra
+	:
 
 choose-onions:
 	@$(eval onions = $(shell read -p 'onions> '; echo $$REPLY))
@@ -567,13 +567,13 @@ endef
 pc-chips: prompt-chips choose-chips
 
 prompt-chips:
-	@cat <<CHIPS
+	@cat <<:
 	
 	Choose your chips:
 	0) None                 3) BBQ
 	1) Salt & Vinegar       4) Regular
 	2) Jalapeno             5) Thinny
-	CHIPS
+	:
 
 choose-chips:
 	@$(eval chips = $(shell read -p 'chips> '; echo $$REPLY))
@@ -633,12 +633,12 @@ endef
 pc-pickle: prompt-pickle choose-pickle
 
 prompt-pickle:
-	@cat <<PICKLE
+	@cat <<:
 	
 	Do you want a pickle?
 	0) None                 2) Halved
 	1) Whole                3) Quartered
-	PICKLE
+	:
 
 choose-pickle:
 	@$(eval pickle = $(shell read -p 'pickle> '; echo $$REPLY))
