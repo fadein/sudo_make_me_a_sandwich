@@ -13,8 +13,8 @@ It simply depends upon:
 * GNU Make
 * sudo (don't worry, root privs are dropped before we get to the net)
 * cURL
-* coreutils
-* a POSIX-compatible shell 
+* coreutils (or busybox)
+* a POSIX-compatible shell (or busybox)
 
 The dependencies are minimal because I like my software the same way I like my
 sandwiches: freaky fast.
