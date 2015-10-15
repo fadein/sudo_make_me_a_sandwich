@@ -7,6 +7,7 @@ Presently, this Makefile lets you:
 2. State your preferences of onions, tomatoes and peppers
 3. Choose your favorite Jimmy Chips
 4. Order a delicious pickle (or not)
+5. Order a giant cookie
 
 It simply depends upon:
 * GNU Make

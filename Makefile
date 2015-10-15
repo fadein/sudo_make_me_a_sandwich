@@ -145,16 +145,16 @@ define BANNER =
       {{ {{ {{ {{ {{ {{  {{   {{   }}  }} {{ {{ }} {{ { }} }}
        {{ {{ {{~~~ {~~{{~~{{`~~,}}  }}  }} }} {{ }} {{ }} }}
      {{ {{ {{~~~~~~~~~  {{`~~,}}  }} ,~~~~~'  `~~~~~, } }}
-         `~~~~~' `~~'   `~~   ~~~`~~~ (=======) `~~, (===)~~` __   ___
-     `~~~~~(=========) ~~~~~~`  ,~~~~~~`    (=====) ,~~~~`   /_ | / _ \ 
-      (=======)~___~(=====)~~___ _~~(=========)~~__~~(======)_| || | | |
-       (  .   .         .  ,   `;       .      ,         )\ / / || | | |
-        (        ,          .   ;     ,           .     )\ V /| || |_| |
-         (_____________________,_______________________)  \_/ |_(_)___/
+         `~~~~~' `~~'   `~~   ~~~`~~~ (=======) `~~, (===)~~` __  __
+     `~~~~~(=========) ~~~~~~`  ,~~~~~~`    (=====) ,~~~~`   /_ |/_ |
+      (=======)~___~(=====)~~___ _~~(=========)~~__~~(======)_| | | |
+       (  .   .         .  ,   `;       .      ,         )\ / / | | |
+        (        ,          .   ;     ,           .     )\ V /| |_| |
+         (_____________________,_______________________)  \_/ |_(_)_|
             use ctrl-c to exit
 endef
 
-choose: pc-sandwich pc-chips pc-pickle get-JJ_LOCATION get-delivery-info get-contact-info get-payment-info
+choose: pc-sandwich pc-chips pc-pickle pc-cookie get-JJ_LOCATION get-delivery-info get-contact-info get-payment-info
 get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
 get-payment-info: get-PAYMENT_CODE get-CC_NUM get-CC_TYPE get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-tip-amount
@@ -265,6 +265,9 @@ post-items: pc-sandwich pc-chips pc-pickle
 		},
 		{
 			$(PICKLE_JSON)
+		},
+		{
+			$(COOKIE_JSON)
 		}
 	]
 	:
@@ -677,6 +680,70 @@ choose-pickle-recurse:
 	@$(if $(filter-out $(pickle-opts), $(pickle)),
 	@ $(eval pickle = $(shell $(MAKE) choose-pickle-recurse)))
 	@$(info $(pickle))
+
+## Selecting a cookie
+cookie-opts = 0 1 2
+
+define COOKIE_IDS
+	23550 23551
+endef
+
+define COOKIE_JSON
+      "MenuItemText" : "Cookie",
+      "MenuItemId" : "3884",
+      "IsSizeFixed" : false,
+      "MustEdit" : false,
+      "IsPriceFixed" : false,
+      "CanEdit" : false,
+      "CouponReference" : "",
+      "SelectedSize" : "Regular",
+      "IsQuantityFixed" : false,
+      "Label" : "",
+      "Quantity" : 1,
+      "Index" : "",
+      "DisplayText" : "",
+      "DisplayPrice" : "",
+      "ConfirmedSprouts" : false,
+      "IsMainCouponItem" : false,
+      "FavoriteName" : null,
+      "RewardNotes" : "",
+      "CanDelete" : false,
+      "Modifiers" : [
+         {
+            "EditItem" : false,
+            "GroupId" : "3992",
+            "SelectedAnswerId" : "$(cookie)",
+            "SelectedAnswerText" : ""
+         }
+      ],
+      "ExtendedPrice" : 0,
+      "ItemCost" : 0,
+      "NoMayo" : false
+endef
+
+pc-cookie: prompt-cookie choose-cookie
+
+prompt-cookie:
+	@cat <<:
+	
+	Do you want a cookie?
+	0) None
+	1) Chocolate Chunk
+	2) Raisin Oatmeal
+	:
+
+choose-cookie:
+	@$(eval cookie = $(shell read -p 'cookie> '; echo $$REPLY))
+	@$(if $(filter-out $(cookie-opts), $(cookie)),
+	@ $(eval cookie = $(shell $(MAKE) choose-cookie-recurse)))
+	@$(eval cookie = $(subst 0,,$(cookie)))
+	@$(if $(cookie), $(eval cookie = $(word $(cookie), $(COOKIE_IDS))))
+
+choose-cookie-recurse:
+	@$(eval cookie = $(shell read -p 'cookie> '; echo $$REPLY))
+	@$(if $(filter-out $(cookie-opts), $(cookie)),
+	@ $(eval cookie = $(shell $(MAKE) choose-cookie-recurse)))
+	@$(info $(cookie))
 
 
 get-tip-amount:
