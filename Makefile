@@ -1005,7 +1005,7 @@ quot-sh:
 	@else
 	@case $$pass in
 	@|)
-	@password=$${password:0:-1}
+	@password=$$(echo $$password | sed 's/.$$//')
 	@echo -n $$'\b' $$'\b' ;;
 	@*)
 	@echo -n $$'\b'"*$$pass"
