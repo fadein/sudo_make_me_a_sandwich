@@ -1129,4 +1129,22 @@ $(1):
 endef
 $(eval $(call templet,rulez,varz))
 
+
+define chiff1 =
+$(1)_:
+	@$$(if $$($(2)), ,
+	@ $$(eval $(2) = $$(shell $(MAKE) $(3)))
+	@ $$(if $(strip $$($(2))), ,
+	@  $$(eval $(2) = $$(shell $(MAKE) $(3)))))
+	@$$(info $$($2))
+
+$(1):
+	$$(eval $(2) = $$(shell $(MAKE) $(1)_))
+	$$(info $(2) is $$($(2)))
+endef
+
+#              $(0)   $(1) $(2)         $(3)
+$(eval $(call chiff1,SS11,SSEECCRREETT,quot-sh))
+
+
 # vim: set iskeyword+=- :
