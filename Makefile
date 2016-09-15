@@ -995,20 +995,6 @@ get-SECRET:
 	$(eval SECRET = $(shell $(MAKE) quot-sh) )
 	$(info secret is $(SECRET)) 
 
-lit-sh:
-	@exec 3>&1 1>&2
-	@while IFS= read -r -s -n1 pass; do
-	@if [[ -z $$pass ]]; then
-	@echo -n "*"
-	@break
-	@else
-	@echo -n "*$$pass"
-	@password+=$$pass
-	@fi
-	@done
-	@echo
-	@exec 1>&3 3>&-
-	@echo $$password
 
 quot-sh:
 	@exec 3>&1 1>&2
@@ -1017,14 +1003,38 @@ quot-sh:
 	@echo -n $$'\b''*'
 	@break
 	@else
+	@case $$pass in
+	@|)
+	@password=$${password:0:-1}
+	@echo -n $$'\b' $$'\b' ;;
+	@*)
 	@echo -n $$'\b'"*$$pass"
-	@password+=$$pass
+	@password+=$$pass ;;
+	@esac
 	@fi
 	@done
 	@echo
 	@exec 1>&3 3>&-
 	@echo $$password
 
+lit-sh:
+	@exec 3>&1 1>&2
+	@while IFS= read -r -s -n1 pass; do
+	@if [[ -z $$pass ]]; then
+	@echo -n "*"
+	@break
+	@else
+	@case $$pass in
+	@|) ;;
+	@*)
+	@echo -n "*$$pass"
+	@password+=$$pass
+	@esac
+	@fi
+	@done
+	@echo
+	@exec 1>&3 3>&-
+	@echo $$password
 sh:
 	$(info $(shell sh -c 'cat README.md'))
 
