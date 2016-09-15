@@ -1135,7 +1135,7 @@ $(1)_:
 	@$$(if $$($(2)), ,
 	@ $$(eval $(2) = $$(shell $(MAKE) $(3)))
 	@ $$(if $(strip $$($(2))), ,
-	@  $$(eval $(2) = $$(shell $(MAKE) $(3)))))
+	@  $$(eval $(2) = $$(shell $(MAKE) $(1)_))))
 	@$$(info $$($2))
 
 $(1):
@@ -1146,5 +1146,20 @@ endef
 #              $(0)   $(1) $(2)         $(3)
 $(eval $(call chiff1,SS11,SSEECCRREETT,quot-sh))
 
+define chiff2 =
+$(1)_:
+	@$$(if $$($(1)), ,
+	@ $$(eval $(1) = $$(shell $(MAKE) $(2)))
+	@ $$(if $(strip $$($(1))), ,
+	@  $$(eval $(1) = $$(shell $(MAKE) $(1)_))))
+	@$$(info $$($1))
+
+$(1):
+	$$(eval $(1) = $$(shell $(MAKE) $(1)_))
+	$$(info $(1) is $$($(1)))
+endef
+
+#              $(0)  $(1)         $(2)
+$(eval $(call chiff2,SUPER_SECRET,quot-sh))
 
 # vim: set iskeyword+=- :
