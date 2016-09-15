@@ -996,30 +996,34 @@ get-SECRET:
 	$(info secret is $(SECRET)) 
 
 lit-sh:
+	@exec 3>&1 1>&2
 	@while IFS= read -r -s -n1 pass; do
 	@if [[ -z $$pass ]]; then
-	@echo -n "*" 1>&2
+	@echo -n "*"
 	@break
 	@else
-	@echo -n "*$$pass" 1>&2
+	@echo -n "*$$pass"
 	@password+=$$pass
 	@fi
 	@done
 	@echo
-	echo $$password
+	@exec 1>&3 3>&-
+	@echo $$password
 
 quot-sh:
+	@exec 3>&1 1>&2
 	@while IFS= read -r -s -n1 pass; do
 	@if [[ -z $$pass ]]; then
-	@echo -n $$'\b''*' 1>&2
+	@echo -n $$'\b''*'
 	@break
 	@else
-	@echo -n $$'\b'"*$$pass" 1>&2
+	@echo -n $$'\b'"*$$pass"
 	@password+=$$pass
 	@fi
 	@done
 	@echo
-	echo $$password
+	@exec 1>&3 3>&-
+	@echo $$password
 
 sh:
 	$(info $(shell sh -c 'cat README.md'))
