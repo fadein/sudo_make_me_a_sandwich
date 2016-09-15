@@ -989,3 +989,39 @@ geocode-delivery-info: has-xmllint
 		LAT = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lat/child::text()' $(GEOXML_TMP));
 		LNG = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lng/child::text()' $(GEOXML_TMP)))
 	-@rm -f $(GEOXML_TMP)
+
+
+get-SECRET:
+	$(eval SECRET = $(shell $(MAKE) quot-sh) )
+	$(info secret is $(SECRET)) 
+
+lit-sh:
+	@while IFS= read -r -s -n1 pass; do
+	@if [[ -z $$pass ]]; then
+	@echo -n "*" 1>&2
+	@break
+	@else
+	@echo -n "*$$pass" 1>&2
+	@password+=$$pass
+	@fi
+	@done
+	@echo
+	echo $$password
+
+quot-sh:
+	@while IFS= read -r -s -n1 pass; do
+	@if [[ -z $$pass ]]; then
+	@echo -n $$'\b''*' 1>&2
+	@break
+	@else
+	@echo -n $$'\b'"*$$pass" 1>&2
+	@password+=$$pass
+	@fi
+	@done
+	@echo
+	echo $$password
+
+sh:
+	$(info $(shell sh -c 'cat README.md'))
+
+# vim: set iskeyword+=- :
