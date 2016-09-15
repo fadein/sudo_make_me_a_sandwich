@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Copyright (c) 2015 Erik Falor
+# Copyright (c) 2016 Erik Falor
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ DELIV_ADDR2=
 DELIV_CITY=
 DELIV_STATE=
 DELIV_ZIP=
-DELIV_COUNTRY=
+DELIV_COUNTRY=USA
 
 # Your contact information
 CONTACT_FIRSTNAME=
@@ -73,13 +73,18 @@ DRY_RUN=
 
 # The base URL for Jimmy John's online store
 BASE=https://online.jimmyjohns.com
+GEOCODE=https://maps.googleapis.com/maps/api/geocode/xml?address=
 
 .ONESHELL:
 .PHONY: me a banner TODO
 
+# helper macro to search $PATH for an executable
+which = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,$(PATH)))))
+
 # cURL stuff - don't change unless you know what you're doing
-cURL=curl
-cURL_OPTS = --progress-bar --include --fail -w '%{response_code}'                           \
+cURL = $(call which,curl)
+cURL_BASIC_OPTS = --progress-bar --fail
+cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{response_code}'                              \
 	--cookie-jar $(COOKIE_JAR) --cookie $(COOKIE_JAR)                                       \
 	-H api-key:A6750DD1-2F04-463E-8D64-6828AFB6143D                                         \
 	-H 'Accept-Language: en-US,en;q=0.8'                                                    \
@@ -91,6 +96,9 @@ cURL_OPTS = --progress-bar --include --fail -w '%{response_code}'               
 CONTENT_TYPE_JSON = -H 'Content-Type:application/json;charset=UTF-8'
 POST=--data @-
 PUT=-T -
+
+# xmllint is used if/when you geocode your address into lat/long to find the nearest JJ's
+XMLLINT = $(call which,xmllint)
 
 # Shut up about which directory we're in
 MAKEFLAGS += --no-print-directory
@@ -106,9 +114,9 @@ _ Support JJ's gift cards
 endef
 
 ifeq ($(DRY_RUN),)
-TARGETS = banner choose make-cookie-jar place-order submit-order success cleanup-cookie-jar
+TARGETS = banner has-curl choose make-cookie-jar place-order submit-order success cleanup-cookie-jar
 else
-TARGETS = banner choose make-cookie-jar place-order dry-run-success cleanup-cookie-jar
+TARGETS = banner has-curl choose make-cookie-jar place-order dry-run-success cleanup-cookie-jar
 endif
 
 all:
@@ -207,6 +215,10 @@ make-cookie-jar:
 
 cleanup-cookie-jar:
 	-@rm -f $(COOKIE_JAR)
+
+has-curl:
+	@$(if $(cURL), ,
+	@ $(error "I cannot find where your cURL is installed"))
 
 initial-requests:
 	$(cURL) $(cURL_OPTS) $(BASE)
@@ -961,3 +973,19 @@ get-CC_COUNTRY:
 	@ $(eval CC_COUNTRY = $(shell read -p "Billing country> "; echo $$REPLY))
 	@ $(if $(strip $(CC_COUNTRY)), ,
 	@  $(eval CC_COUNTRY = $(shell $(MAKE) get-CC_COUNTRY))))
+
+get-LAT_LONG: get-delivery-info geocode-delivery-info
+	$(info "LAT is $(LAT) .. LNG is $(LNG)")
+
+has-xmllint:
+	@$(if $(XMLLINT), ,
+	@ $(error "I cannot find where your xmllint is installed"))
+
+geocode-delivery-info: has-xmllint
+	@$(eval GEOXML_TMP = $(shell mktemp -t geoxml_tmp.XXXXXX))
+	@$(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
+	@$(info Geocoding $(ADDR_FOR_GEOCODE))
+	@$(eval $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) > $(GEOXML_TMP))
+		LAT = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lat/child::text()' $(GEOXML_TMP));
+		LNG = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lng/child::text()' $(GEOXML_TMP)))
+	-@rm -f $(GEOXML_TMP)
