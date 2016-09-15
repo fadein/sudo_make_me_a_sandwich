@@ -1039,7 +1039,42 @@ get-SECRET-recurse:
 	@  $(eval SECRET = $(shell $(MAKE) get-SECRET-recurse))))
 	@$(info $(SECRET))
 
-try: get-SECRET
+gs:
+	@$(eval SECRET = $(shell $(MAKE) gsr)) :
+
+gsr:
+	@$(if $(SECRET), ,
+	@ $(eval SECRET = $(shell $(MAKE) quot-sh))
+	@ $(if $(strip $(SECRET)), ,
+	@  $(eval SECRET = $(shell $(MAKE) gsr))))
+	@$(info $(SECRET))
+
+define chiff0 =
+$(2):
+	$(info $(0) $(1) $(2) $(3) THYRE $@)
+	$(if $($$(1)), ,
+	 $(eval $(1) = $(shell $(MAKE) $(3)))
+	 $(if $(strip $($$(1))), ,
+	  $(eval $(1) = $(shell $(MAKE) $(2)))))
+	$(info $($$(1)))
+
+$(1):
+	$(info $(0) $(1) $(2) $(3) hare)
+	$(eval $(1) = $(shell $(MAKE) $(2)))) :
+endef
+
+def-gs:
+	$(eval $(call chiff0,SSEECCRREETT,SS22,get-CC_NUM))
+
+#--debug[=FLAGS]
+#      Print debugging information in addition to normal processing.  If the FLAGS are omitted, then the  behav‐
+#      ior  is  the  same as if -d was specified.  FLAGS may be a for all debugging output (same as using -d), b
+#      for basic debugging, v for more verbose basic debugging, i for showing implicit rules, j for  details  on
+#      invocation  of  commands,  and  m  for debugging while remaking makefiles.  Use n to disable all previous
+#      debugging flags.
+
+
+try: def-gs
 	$(info $(SECRET))
 
 trycc: get-CC_NUM
@@ -1050,7 +1085,7 @@ trytom: pc-tomatoes
 
 quot-sh:
 	@exec 3>&1 1>&2
-	@echo -n "SECRET> "
+	@echo -n "QUOT-SH> "
 	@while IFS= read -r -s -n1 char; do
 	@if [ "0$$char" = 0 ]; then
 	@echo -n $$'\b''*'
