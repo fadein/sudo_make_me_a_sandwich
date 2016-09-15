@@ -68,15 +68,16 @@ CC_ZIP=
 CC_COUNTRY=
 
 # Don't actually go through with the order; don't click "Submit" at the end
-DRY_RUN=
+DRY_RUN=1
 
 
 # The base URL for Jimmy John's online store
 BASE=https://online.jimmyjohns.com
 GEOCODE=https://maps.googleapis.com/maps/api/geocode/xml?address=
 
+#SHELL = /home/fadein/scripts/sh
 .ONESHELL:
-.PHONY: me a banner TODO
+.PHONY: me a banner TODO echo-info
 
 # helper macro to search $PATH for an executable
 which = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,$(PATH)))))
@@ -109,6 +110,11 @@ cURL_OPTS += --trace-ascii -
 endif
 
 define TODO
+_ Geocode addresses
+_ Return your JJ's location IDs
+_ I have *-recurse targets for the menu items; I also need to do that
+  for the billing info. If I don't get an input on the 1st attempt, the 2nd
+  and subsequent attempts won't really pass back their captured values
 _ query ADDR2 fields only when the corresponding ADDR1 was also blank
 _ Support JJ's gift cards
 endef
@@ -116,7 +122,7 @@ endef
 ifeq ($(DRY_RUN),)
 TARGETS = banner has-curl choose make-cookie-jar place-order submit-order success cleanup-cookie-jar
 else
-TARGETS = banner has-curl choose make-cookie-jar place-order dry-run-success cleanup-cookie-jar
+TARGETS = banner has-curl choose echo-info make-cookie-jar place-order dry-run-success cleanup-cookie-jar
 endif
 
 all:
@@ -223,6 +229,34 @@ has-curl:
 initial-requests:
 	$(cURL) $(cURL_OPTS) $(BASE)
 	$(cURL) $(cURL_OPTS) $(BASE)/api/Customer/
+
+echo-info:
+	@cat <<:
+	JJ_LOCATION=$(JJ_LOCATION)
+	DELIV_ADDR1=$(DELIV_ADDR1)
+	DELIV_ADDR2=$(DELIV_ADDR2)
+	DELIV_CITY=$(DELIV_CITY)
+	DELIV_STATE=$(DELIV_STATE)
+	DELIV_ZIP=$(DELIV_ZIP)
+	DELIV_COUNTRY=$(DELIV_COUNTRY)
+	CONTACT_FIRSTNAME=$(CONTACT_FIRSTNAME)
+	CONTACT_LASTNAME=$(CONTACT_LASTNAME)
+	CONTACT_EMAIL=$(CONTACT_EMAIL)
+	CONTACT_PHONE=$(CONTACT_PHONE)
+	PAYMENT_CODE=$(PAYMENT_CODE)
+	CC_NUM=$(CC_NUM)
+	CC_TYPE=$(CC_TYPE)
+	CC_CVV=$(CC_CVV)
+	CC_YEAR=$(CC_YEAR)
+	CC_MONTH=$(CC_MONTH)
+	CC_ADDR1=$(CC_ADDR1)
+	CC_ADDR2=$(CC_ADDR2)
+	CC_CITY=$(CC_CITY)
+	CC_STATE=$(CC_STATE)
+	CC_ZIP=$(CC_ZIP)
+	CC_COUNTRY=$(CC_COUNTRY)
+	:
+	sleep 10
 
 negotiate-address: CheckForManualAddress ForDeliveryAddress VerifyDeliveryAddress
 CheckForManualAddress VerifyDeliveryAddress: export METHOD=$(POST)
@@ -992,24 +1026,49 @@ geocode-delivery-info: has-xmllint
 
 
 get-SECRET:
-	$(eval SECRET = $(shell $(MAKE) quot-sh) )
-	$(info secret is $(SECRET)) 
+	@$(if $(SECRET), ,
+	@ $(eval SECRET = $(shell $(MAKE) quot-sh))
+	@ $(if $(strip $(SECRET)), ,
+	@  $(eval SECRET = $(shell $(MAKE) get-SECRET-recurse))))
 
+## This proves that I should be recursing over all inputs
+get-SECRET-recurse:
+	@$(if $(SECRET), ,
+	@ $(eval SECRET = $(shell $(MAKE) quot-sh))
+	@ $(if $(strip $(SECRET)), ,
+	@  $(eval SECRET = $(shell $(MAKE) get-SECRET-recurse))))
+	@$(info $(SECRET))
+
+try: get-SECRET
+	$(info $(SECRET))
+
+trycc: get-CC_NUM
+	$(info $(CC_NUM))
+
+trytom: pc-tomatoes
+	$(info $(tomatoes))
 
 quot-sh:
 	@exec 3>&1 1>&2
-	@while IFS= read -r -s -n1 pass; do
-	@if [[ -z $$pass ]]; then
+	@echo -n "SECRET> "
+	@while IFS= read -r -s -n1 char; do
+	@if [ "0$$char" = 0 ]; then
 	@echo -n $$'\b''*'
 	@break
 	@else
-	@case $$pass in
+	@case $$char in
 	@|)
+	@if [ "0$$password" != 0 ]; then
 	@password=$$(echo $$password | sed 's/.$$//')
-	@echo -n $$'\b' $$'\b' ;;
+	@echo -n $$'\b' $$'\b'
+	@fi ;;
 	@*)
-	@echo -n $$'\b'"*$$pass"
-	@password+=$$pass ;;
+	@if [ "0$$password" != 0 ]; then
+	@echo -n $$'\b'"*$$char"
+	@else
+	@echo -n $$char
+	@fi
+	@password=$${password}$${char} ;;
 	@esac
 	@fi
 	@done
@@ -1017,25 +1076,5 @@ quot-sh:
 	@exec 1>&3 3>&-
 	@echo $$password
 
-lit-sh:
-	@exec 3>&1 1>&2
-	@while IFS= read -r -s -n1 pass; do
-	@if [[ -z $$pass ]]; then
-	@echo -n "*"
-	@break
-	@else
-	@case $$pass in
-	@|) ;;
-	@*)
-	@echo -n "*$$pass"
-	@password+=$$pass
-	@esac
-	@fi
-	@done
-	@echo
-	@exec 1>&3 3>&-
-	@echo $$password
-sh:
-	$(info $(shell sh -c 'cat README.md'))
 
 # vim: set iskeyword+=- :
