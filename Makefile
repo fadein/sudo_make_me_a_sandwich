@@ -1124,8 +1124,8 @@ $(1)_:
 	@$$(info snark comment is snarky) :
 
 $(1):
-	@$$(eval varvar = $$(shell $(MAKE) $(1)_))
-	@$$(info varvar is $$(varvar))
+	@$$(eval $(2) = $$(shell $(MAKE) $(1)_))
+	@$$(info $(2) is $$($(2)))
 endef
 $(eval $(call templet,rulez,varz))
 
