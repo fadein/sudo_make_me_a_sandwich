@@ -1050,32 +1050,24 @@ gsr:
 	@$(info $(SECRET))
 
 define chiff0 =
-$(2):
-	$(info $(0) $(1) $(2) $(3) THYRE $@)
-	$(if $($$(1)), ,
-	 $(eval $(1) = $(shell $(MAKE) $(3)))
-	 $(if $(strip $($$(1))), ,
-	  $(eval $(1) = $(shell $(MAKE) $(2)))))
-	$(info $($$(1)))
+$(3):
+	@$(info $(0) $(1) $(2) <$(3)> $(4) $@ $^)
+	@$$(if $$($(1)), ,
+	@ $$(eval $(1) = $$(shell $(MAKE) $(4)))
+	@ $$(if $(strip $$($(1))), ,
+	@  $$(eval $(1) = $$(shell $(MAKE) $(3)))))
+	@$$(info $(1))
 
-$(1):
-	$(info $(0) $(1) $(2) $(3) hare)
-	$(eval $(1) = $(shell $(MAKE) $(2)))) :
+$(2):
+	$(info $(0) $(1) <$(2)> $(3) $(4) $@ $^)
+	$(eval $(1) = $(shell $(MAKE) $(3)))) :
 endef
 
-def-gs:
-	$(eval $(call chiff0,SSEECCRREETT,SS22,get-CC_NUM))
+#             $(0)   $(1)         $(2) $(3) $(4)
+#$(eval $(call chiff0,SSEECCRREETT,SS11,SS22,get-CC_NUM))
 
-#--debug[=FLAGS]
-#      Print debugging information in addition to normal processing.  If the FLAGS are omitted, then the  behav‐
-#      ior  is  the  same as if -d was specified.  FLAGS may be a for all debugging output (same as using -d), b
-#      for basic debugging, v for more verbose basic debugging, i for showing implicit rules, j for  details  on
-#      invocation  of  commands,  and  m  for debugging while remaking makefiles.  Use n to disable all previous
-#      debugging flags.
-
-
-try: def-gs
-	$(info $(SECRET))
+try: SS11
+	$(info $(SSEECCRREETT))
 
 trycc: get-CC_NUM
 	$(info $(CC_NUM))
@@ -1111,5 +1103,30 @@ quot-sh:
 	@exec 1>&3 3>&-
 	@echo $$password
 
+
+define TEMPLATE_ONE_RULE =
+$(1):
+	@$$(info now is the time, $(1)) :
+endef
+$(eval $(call TEMPLATE_ONE_RULE,jimmer))
+
+define TEMPLATE_TWO_RULES =
+$(1)_:
+	@$$(info then was the time, $(1)_) :
+
+$(1): $(1)_
+	@$$(info this is the other rule $(1))
+endef
+$(eval $(call TEMPLATE_TWO_RULES,jammer))
+
+define templet =
+$(1)_:
+	@$$(info snark comment is snarky) :
+
+$(1):
+	@$$(eval varvar = $$(shell $(MAKE) $(1)_))
+	@$$(info varvar is $$(varvar))
+endef
+$(eval $(call templet,rulez,varz))
 
 # vim: set iskeyword+=- :
