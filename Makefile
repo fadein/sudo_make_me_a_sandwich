@@ -223,7 +223,7 @@ cleanup-cookie-jar:
 	-@rm -f $(COOKIE_JAR)
 
 has-curl:
-	@$(if $(cURL), ,
+	@$(if $(cURL),@:,
 	@ $(error "I cannot find where your cURL is installed"))
 
 initial-requests:
@@ -1012,7 +1012,7 @@ get-LAT_LONG: get-delivery-info geocode-delivery-info
 	$(info "LAT is $(LAT) .. LNG is $(LNG)")
 
 has-xmllint:
-	@$(if $(XMLLINT), ,
+	@$(if $(XMLLINT),@:,
 	@ $(error "I cannot find where your xmllint is installed"))
 
 geocode-delivery-info: has-xmllint
