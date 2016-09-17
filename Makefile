@@ -221,7 +221,7 @@ endef
 choose: pc-sandwich pc-chips pc-pickle pc-cookie get-JJ_LOCATION get-delivery-info get-contact-info get-payment-info
 get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
-get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-tip-amount
+get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
 place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
 
 make-cookie-jar:
@@ -263,6 +263,7 @@ echo-info:
 	CC_STATE=$(CC_STATE)
 	CC_ZIP=$(CC_ZIP)
 	CC_COUNTRY=$(CC_COUNTRY)
+	TIP_AMOUNT=$(TIP_AMOUNT)
 	:
 	sleep 10
 
@@ -386,10 +387,10 @@ put-contact-info: get-contact-info
 
 # Submit the tip
 put-tip: export METHOD=$(PUT)
-put-tip: get-tip-amount
+put-tip: get-TIP_AMOUNT
 	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Payment/Tip/
 	{
-	    "TipAmount" : "$(tip-amount)",
+	    "TipAmount" : "$(TIP_AMOUNT)",
 	    "TipType" : "AMOUNT"
 	}
 	:
@@ -834,14 +835,6 @@ choose-cookie-recurse:
 	@$(info $(cookie))
 
 
-get-tip-amount:
-	@$(if $(tip-amount), ,
-	@ $(eval tip-amount = $(shell read -p "Tip amount $$"; echo $$REPLY | tr -d '$$'))
-	@ $(if $(strip $(tip-amount)), ,
-	@  $(eval tip-amount = $(shell $(MAKE) get-tip-amount)))
-	@ $(info $(tip-amount)))
-
-
 define CC_TYPE_TABLE
 1) American Express       3) Mastercard              5) Diners
 2) Visa                   4) Discover
@@ -942,6 +935,7 @@ $(eval $(call text-entry-prompt,CC_CITY,"Billing city",text-input))
 $(eval $(call text-entry-prompt,CC_STATE,"Billing state",text-input))
 $(eval $(call text-entry-prompt,CC_ZIP,"Billing ZIP",numeric-input))
 $(eval $(call text-entry-prompt,CC_COUNTRY,"Billing country",text-input))
+$(eval $(call text-entry-prompt,TIP_AMOUNT,"Tip amount",text-input))
 
 get-LAT_LONG: get-delivery-info geocode-delivery-info
 	$(info "LAT is $(LAT) .. LNG is $(LNG)")
