@@ -850,10 +850,12 @@ get-CC_TYPE:
 	@ $(eval CC_TYPE = $(word $(shell $(MAKE) choose-CC_TYPE), $(CC_TYPE_IDS))))
 
 choose-CC_TYPE:
-	@$(eval CC_TYPE = $(shell read -p 'Credit card Type> '; echo $$REPLY))
-	@$(if $(filter-out 1 2 3 4 5, $(CC_TYPE)),
-	@ $(eval CC_TYPE = $(shell $(MAKE) choose-CC_TYPE)))
-	@ $(info $(CC_TYPE))
+	@$(eval CC_TYPE = $(shell read -p 'Credit card type> '; echo $$REPLY))
+	@$(if $(CC_TYPE),
+	@ $(if $(filter-out 1 2 3 4 5, $(CC_TYPE)),
+	@  $(eval CC_TYPE = $(shell $(MAKE) choose-CC_TYPE))),
+	@  $(eval CC_TYPE = $(shell $(MAKE) choose-CC_TYPE)))
+	@  $(info $(firstword $(CC_TYPE)))
 
 
 # Text input method #0:
