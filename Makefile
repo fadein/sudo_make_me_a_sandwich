@@ -518,15 +518,14 @@ prompt-sandwich:
 	:
 
 choose-sandwich:
-	@$(eval sandwich = $(shell read -p 'sandwich> '; echo $$REPLY))
-	@$(if $(filter-out $(sandwich-opts), $(sandwich)),
-	@ $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
-	@$(eval sandwich = $(word $(sandwich), $(SANDWICH_IDS)))
+	@$(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse))
 
 choose-sandwich-recurse:
 	@$(eval sandwich = $(shell read -p 'sandwich> '; echo $$REPLY))
-	@$(if $(filter-out $(sandwich-opts), $(sandwich)),
-	@ $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
+	@$(if $(sandwich),
+	@ $(if $(filter-out $(sandwich-opts), $(sandwich)),
+	@  $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse))),
+	@  $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
 	@$(info $(sandwich))
 
 # customizing the sandwich
