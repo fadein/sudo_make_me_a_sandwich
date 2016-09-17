@@ -67,6 +67,14 @@ CC_STATE=
 CC_ZIP=
 CC_COUNTRY=
 
+# This order amount must be some value which is greater than any possible JJ's
+# order for a single meal. I blindly send this value merely to appease the
+# website's own validation (this program does not attempt to keep track of the
+# cost of your purchase). Note that you are not charged this amount; you only
+# pay for what you buy actually buy. If you live in a place where a meal at
+# JJ's costs more than this, just tick this up a bit (and God help you).
+MAX_ORDER_AMOUNT=30.00
+
 # Don't actually go through with the order; don't click "Submit" at the end
 DRY_RUN=1
 
@@ -213,7 +221,7 @@ endef
 choose: pc-sandwich pc-chips pc-pickle pc-cookie get-JJ_LOCATION get-delivery-info get-contact-info get-payment-info
 get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
-get-payment-info: get-PAYMENT_CODE get-CC_NUM get-CC_TYPE get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-tip-amount
+get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-tip-amount
 place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
 
 make-cookie-jar:
@@ -408,7 +416,7 @@ post-payment: get-payment-info
 		"GiftCardNumber" : "",
 		"SaveGiftCardInformation" : false,
 		"GiftCardPinNumber" : "",
-		"Amount" : 30.00
+		"Amount" : $(MAX_ORDER_AMOUNT)
 	}
 	:
 
@@ -855,158 +863,85 @@ choose-CC_TYPE:
 	@ $(info $(CC_TYPE))
 
 
-get-JJ_LOCATION:
-	@$(if $(JJ_LOCATION), ,
-	@ $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
-	@ $(if $(strip $(JJ_LOCATION)), ,
-	@  $(eval JJ_LOCATION = $(shell $(MAKE) get-JJ_LOCATION))))
+# Text input method #0:
+# Simply read a bit of text with a fancy prompt
+text-input:
+	@read -p "$(PS4)> "
+	@echo $$REPLY
 
+numeric-input:
+	@read -p "$(PS4)> "
+	@echo $$REPLY | tr -dc '[[:digit:]]'
 
-get-DELIV_ADDR1:
-	@$(if $(DELIV_ADDR1), ,
-	@ $(eval DELIV_ADDR1 = $(shell read -p "Delivery address 1> "; echo $$REPLY))
-	@ $(if $(strip $(DELIV_ADDR1)), ,
-	@  $(eval DELIV_ADDR1 = $(shell $(MAKE) get-DELIV_ADDR1))))
+# Text input method #1: Password entry a la smartphones
+# Obscure all but the most recently entered character with an asterisk,
+# supporting backspace. Uses bashisms.
+secret-numeric-input:
+	@exec 3>&1 1>&2
+	@echo -n "$(PS4)> "
+	@while IFS= read -r -s -n1 char; do
+	@if [[ -z "$$char" ]]; then
+	@echo -n $$'\b''*'
+	@break
+	@else
+	@case $$char in
+	@|)
+	@if [[ -n "$$password" ]]; then
+	@password=$${password:0:-1}
+	@echo -n $$'\b' $$'\b'
+	@fi ;;
+	@*)
+	@if [[ -n "$$password" ]]; then
+	@echo -n $$'\b'"*$$char"
+	@else
+	@echo -n $$char
+	@fi
+	@password=$${password}$${char} ;;
+	@esac
+	@fi
+	@done
+	@echo
+	@exec 1>&3 3>&-
+	@echo $$password | tr -dc '[[:digit:]]'
 
+# Macro for any text entry prompt.
+# Ensures that *some* input was entered by recursively calling itself until
+# a non-empty string is received. The actual text input method is supplied as a parameter,
+# meaning that secret text may be handled the same as ordinary text.
+define text-entry-prompt =
+get-$(1)_:
+	@$$(if $$($(1)), ,
+	@ $$(eval $(1) = $$(shell $(MAKE) $(3) PS4=$(2)))
+	@ $$(if $(strip $$($(1))), ,
+	@  $$(eval $(1) = $$(shell $(MAKE) get-$(1)_))))
+	@$$(info $$($1))
 
-get-DELIV_ADDR2:
-	@$(if $(DELIV_ADDR2), ,
-	@ $(eval DELIV_ADDR2 = $(shell read -p "Delivery address 2> "; echo $$REPLY))
-	@ $(if $(strip $(DELIV_ADDR2)), ,
-	@  $(eval DELIV_ADDR2 = $(shell $(MAKE) get-DELIV_ADDR2))))
+get-$(1):
+	$$(eval $(1) = $$(shell $(MAKE) get-$(1)_))
+endef
 
-
-get-DELIV_CITY:
-	@$(if $(DELIV_CITY), ,
-	@ $(eval DELIV_CITY = $(shell read -p "Delivery city> "; echo $$REPLY))
-	@ $(if $(strip $(DELIV_CITY)), ,
-	@  $(eval DELIV_CITY = $(shell $(MAKE) get-DELIV_CITY))))
-
-
-get-DELIV_STATE:
-	@$(if $(DELIV_STATE), ,
-	@ $(eval DELIV_STATE = $(shell read -p "Delivery state> "; echo $$REPLY))
-	@ $(if $(strip $(DELIV_STATE)), ,
-	@  $(eval DELIV_STATE = $(shell $(MAKE) get-DELIV_STATE))))
-
-
-get-DELIV_ZIP:
-	@$(if $(DELIV_ZIP), ,
-	@ $(eval DELIV_ZIP = $(shell read -p "Delivery ZIP> "; echo $$REPLY))
-	@ $(if $(strip $(DELIV_ZIP)), ,
-	@  $(eval DELIV_ZIP = $(shell $(MAKE) get-DELIV_ZIP))))
-
-
-get-DELIV_COUNTRY:
-	@$(if $(DELIV_COUNTRY), ,
-	@ $(eval DELIV_COUNTRY = $(shell read -p "Delivery country> "; echo $$REPLY))
-	@ $(if $(strip $(DELIV_COUNTRY)), ,
-	@  $(eval DELIV_COUNTRY = $(shell $(MAKE) get-DELIV_COUNTRY))))
-
-
-get-CONTACT_FIRSTNAME:
-	@$(if $(CONTACT_FIRSTNAME), ,
-	@ $(eval CONTACT_FIRSTNAME = $(shell read -p "Your first name> "; echo $$REPLY))
-	@ $(if $(strip $(CONTACT_FIRSTNAME)), ,
-	@  $(eval CONTACT_FIRSTNAME = $(shell $(MAKE) get-CONTACT_FIRSTNAME))))
-
-
-get-CONTACT_LASTNAME:
-	@$(if $(CONTACT_LASTNAME), ,
-	@ $(eval CONTACT_LASTNAME = $(shell read -p "Your last name> "; echo $$REPLY))
-	@ $(if $(strip $(CONTACT_LASTNAME)), ,
-	@  $(eval CONTACT_LASTNAME = $(shell $(MAKE) get-CONTACT_LASTNAME))))
-
-
-get-CONTACT_EMAIL:
-	@$(if $(CONTACT_EMAIL), ,
-	@ $(eval CONTACT_EMAIL = $(shell read -p "Your email address> "; echo $$REPLY))
-	@ $(if $(strip $(CONTACT_EMAIL)), ,
-	@  $(eval CONTACT_EMAIL = $(shell $(MAKE) get-CONTACT_EMAIL))))
-
-
-get-CONTACT_PHONE:
-	@$(if $(CONTACT_PHONE), ,
-	@ $(eval CONTACT_PHONE = $(shell read -p "Your phone #> "; echo $$REPLY | tr -d ' ()-.'))
-	@ $(if $(strip $(CONTACT_PHONE)), ,
-	@  $(eval CONTACT_PHONE = $(shell $(MAKE) get-CONTACT_PHONE))))
-
-
-get-PAYMENT_CODE:
-	@$(if $(PAYMENT_CODE), ,
-	@ $(eval PAYMENT_CODE = $(shell read -p "Payment type> "; echo $$REPLY))
-	@ $(if $(strip $(PAYMENT_CODE)), ,
-	@  $(eval PAYMENT_CODE = $(shell $(MAKE) get-PAYMENT_CODE))))
-
-
-get-CC_NUM:
-	@$(if $(CC_NUM), ,
-	@ $(eval CC_NUM = $(shell read -p "Credit card #> "; echo $$REPLY | tr -d ' -'))
-	@ $(if $(strip $(CC_NUM)), ,
-	@  $(eval CC_NUM = $(shell $(MAKE) get-CC_NUM))))
-
-
-get-CC_CVV:
-	@$(if $(CC_CVV), ,
-	@ $(eval CC_CVV = $(shell read -p "CVV security code> "; echo $$REPLY))
-	@ $(if $(strip $(CC_CVV)), ,
-	@  $(eval CC_CVV = $(shell $(MAKE) get-CC_CVV))))
-
-
-get-CC_YEAR:
-	@$(if $(CC_YEAR), ,
-	@ $(eval CC_YEAR = $(shell read -p "CC expiration year (4 digits)> "; echo $$REPLY))
-	@ $(if $(strip $(CC_YEAR)), ,
-	@  $(eval CC_YEAR = $(shell $(MAKE) get-CC_YEAR))))
-
-
-get-CC_MONTH:
-	@$(if $(CC_MONTH), ,
-	@ $(eval CC_MONTH = $(shell read -p "CC expiration month> "; echo $$REPLY))
-	@ $(if $(strip $(CC_MONTH)), ,
-	@  $(eval CC_MONTH = $(shell $(MAKE) get-CC_MONTH))))
-
-
-get-CC_ADDR1:
-	@$(if $(CC_ADDR1), ,
-	@ $(eval CC_ADDR1 = $(shell read -p "Billing address 1> "; echo $$REPLY))
-	@ $(if $(strip $(CC_ADDR1)), ,
-	@  $(eval CC_ADDR1 = $(shell $(MAKE) get-CC_ADDR1))))
-
-
-get-CC_ADDR2:
-	@$(if $(CC_ADDR2), ,
-	@ $(eval CC_ADDR2 = $(shell read -p "Billing address 2> "; echo $$REPLY))
-	@ $(if $(strip $(CC_ADDR2)), ,
-	@  $(eval CC_ADDR2 = $(shell $(MAKE) get-CC_ADDR2))))
-
-
-get-CC_CITY:
-	@$(if $(CC_CITY), ,
-	@ $(eval CC_CITY = $(shell read -p "Billing city> "; echo $$REPLY))
-	@ $(if $(strip $(CC_CITY)), ,
-	@  $(eval CC_CITY = $(shell $(MAKE) get-CC_CITY))))
-
-
-get-CC_STATE:
-	@$(if $(CC_STATE), ,
-	@ $(eval CC_STATE = $(shell read -p "Billing state> "; echo $$REPLY))
-	@ $(if $(strip $(CC_STATE)), ,
-	@  $(eval CC_STATE = $(shell $(MAKE) get-CC_STATE))))
-
-
-get-CC_ZIP:
-	@$(if $(CC_ZIP), ,
-	@ $(eval CC_ZIP = $(shell read -p "Billing ZIP> "; echo $$REPLY))
-	@ $(if $(strip $(CC_ZIP)), ,
-	@  $(eval CC_ZIP = $(shell $(MAKE) get-CC_ZIP))))
-
-
-get-CC_COUNTRY:
-	@$(if $(CC_COUNTRY), ,
-	@ $(eval CC_COUNTRY = $(shell read -p "Billing country> "; echo $$REPLY))
-	@ $(if $(strip $(CC_COUNTRY)), ,
-	@  $(eval CC_COUNTRY = $(shell $(MAKE) get-CC_COUNTRY))))
+$(eval $(call text-entry-prompt,JJ_LOCATION,"Jimmy John's location #",numeric-input))
+$(eval $(call text-entry-prompt,DELIV_ADDR1,"Delivery address 1",text-input))
+$(eval $(call text-entry-prompt,DELIV_ADDR2,"Delivery address 2",text-input))
+$(eval $(call text-entry-prompt,DELIV_CITY,"Delivery city",text-input))
+$(eval $(call text-entry-prompt,DELIV_STATE,"Delivery state",text-input))
+$(eval $(call text-entry-prompt,DELIV_ZIP,"Delivery ZIP",numeric-input))
+$(eval $(call text-entry-prompt,DELIV_COUNTRY,"Delivery country",text-input))
+$(eval $(call text-entry-prompt,CONTACT_FIRSTNAME,"Your first name",text-input))
+$(eval $(call text-entry-prompt,CONTACT_LASTNAME,"Your last name",text-input))
+$(eval $(call text-entry-prompt,CONTACT_EMAIL,"Your email address",text-input))
+$(eval $(call text-entry-prompt,CONTACT_PHONE,"Your phone #",numeric-input))
+$(eval $(call text-entry-prompt,PAYMENT_CODE,"Payment type (should be CC)",text-input))
+$(eval $(call text-entry-prompt,CC_NUM,"Credit card #",secret-numeric-input))
+$(eval $(call text-entry-prompt,CC_CVV,"CVV security code",secret-numeric-input))
+$(eval $(call text-entry-prompt,CC_YEAR,"CC expiration year (4 digits)",numeric-input))
+$(eval $(call text-entry-prompt,CC_MONTH,"CC expiration month (2 digits)",numeric-input))
+$(eval $(call text-entry-prompt,CC_ADDR1,"Billing address 1",text-input))
+$(eval $(call text-entry-prompt,CC_ADDR2,"Billing address 2",text-input))
+$(eval $(call text-entry-prompt,CC_CITY,"Billing city",text-input))
+$(eval $(call text-entry-prompt,CC_STATE,"Billing state",text-input))
+$(eval $(call text-entry-prompt,CC_ZIP,"Billing ZIP",numeric-input))
+$(eval $(call text-entry-prompt,CC_COUNTRY,"Billing country",text-input))
 
 get-LAT_LONG: get-delivery-info geocode-delivery-info
 	$(info "LAT is $(LAT) .. LNG is $(LNG)")
@@ -1023,143 +958,5 @@ geocode-delivery-info: has-xmllint
 		LAT = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lat/child::text()' $(GEOXML_TMP));
 		LNG = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lng/child::text()' $(GEOXML_TMP)))
 	-@rm -f $(GEOXML_TMP)
-
-
-get-SECRET:
-	@$(if $(SECRET), ,
-	@ $(eval SECRET = $(shell $(MAKE) quot-sh))
-	@ $(if $(strip $(SECRET)), ,
-	@  $(eval SECRET = $(shell $(MAKE) get-SECRET-recurse))))
-
-## This proves that I should be recursing over all inputs
-get-SECRET-recurse:
-	@$(if $(SECRET), ,
-	@ $(eval SECRET = $(shell $(MAKE) quot-sh))
-	@ $(if $(strip $(SECRET)), ,
-	@  $(eval SECRET = $(shell $(MAKE) get-SECRET-recurse))))
-	@$(info $(SECRET))
-
-gs:
-	@$(eval SECRET = $(shell $(MAKE) gsr)) :
-
-gsr:
-	@$(if $(SECRET), ,
-	@ $(eval SECRET = $(shell $(MAKE) quot-sh))
-	@ $(if $(strip $(SECRET)), ,
-	@  $(eval SECRET = $(shell $(MAKE) gsr))))
-	@$(info $(SECRET))
-
-define chiff0 =
-$(3):
-	@$(info $(0) $(1) $(2) <$(3)> $(4) $@ $^)
-	@$$(if $$($(1)), ,
-	@ $$(eval $(1) = $$(shell $(MAKE) $(4)))
-	@ $$(if $(strip $$($(1))), ,
-	@  $$(eval $(1) = $$(shell $(MAKE) $(3)))))
-	@$$(info $(1))
-
-$(2):
-	$(info $(0) $(1) <$(2)> $(3) $(4) $@ $^)
-	$(eval $(1) = $(shell $(MAKE) $(3)))) :
-endef
-
-#             $(0)   $(1)         $(2) $(3) $(4)
-#$(eval $(call chiff0,SSEECCRREETT,SS11,SS22,get-CC_NUM))
-
-try: SS11
-	$(info $(SSEECCRREETT))
-
-trycc: get-CC_NUM
-	$(info $(CC_NUM))
-
-trytom: pc-tomatoes
-	$(info $(tomatoes))
-
-quot-sh:
-	@exec 3>&1 1>&2
-	@echo -n "QUOT-SH> "
-	@while IFS= read -r -s -n1 char; do
-	@if [ "0$$char" = 0 ]; then
-	@echo -n $$'\b''*'
-	@break
-	@else
-	@case $$char in
-	@|)
-	@if [ "0$$password" != 0 ]; then
-	@password=$$(echo $$password | sed 's/.$$//')
-	@echo -n $$'\b' $$'\b'
-	@fi ;;
-	@*)
-	@if [ "0$$password" != 0 ]; then
-	@echo -n $$'\b'"*$$char"
-	@else
-	@echo -n $$char
-	@fi
-	@password=$${password}$${char} ;;
-	@esac
-	@fi
-	@done
-	@echo
-	@exec 1>&3 3>&-
-	@echo $$password
-
-
-define TEMPLATE_ONE_RULE =
-$(1):
-	@$$(info now is the time, $(1)) :
-endef
-$(eval $(call TEMPLATE_ONE_RULE,jimmer))
-
-define TEMPLATE_TWO_RULES =
-$(1)_:
-	@$$(info then was the time, $(1)_) :
-
-$(1): $(1)_
-	@$$(info this is the other rule $(1))
-endef
-$(eval $(call TEMPLATE_TWO_RULES,jammer))
-
-define templet =
-$(1)_:
-	@$$(info snark comment is snarky) :
-
-$(1):
-	@$$(eval $(2) = $$(shell $(MAKE) $(1)_))
-	@$$(info $(2) is $$($(2)))
-endef
-$(eval $(call templet,rulez,varz))
-
-
-define chiff1 =
-$(1)_:
-	@$$(if $$($(2)), ,
-	@ $$(eval $(2) = $$(shell $(MAKE) $(3)))
-	@ $$(if $(strip $$($(2))), ,
-	@  $$(eval $(2) = $$(shell $(MAKE) $(1)_))))
-	@$$(info $$($2))
-
-$(1):
-	$$(eval $(2) = $$(shell $(MAKE) $(1)_))
-	$$(info $(2) is $$($(2)))
-endef
-
-#              $(0)   $(1) $(2)         $(3)
-$(eval $(call chiff1,SS11,SSEECCRREETT,quot-sh))
-
-define chiff2 =
-$(1)_:
-	@$$(if $$($(1)), ,
-	@ $$(eval $(1) = $$(shell $(MAKE) $(2)))
-	@ $$(if $(strip $$($(1))), ,
-	@  $$(eval $(1) = $$(shell $(MAKE) $(1)_))))
-	@$$(info $$($1))
-
-$(1):
-	$$(eval $(1) = $$(shell $(MAKE) $(1)_))
-	$$(info $(1) is $$($(1)))
-endef
-
-#              $(0)  $(1)         $(2)
-$(eval $(call chiff2,SUPER_SECRET,quot-sh))
 
 # vim: set iskeyword+=- :
