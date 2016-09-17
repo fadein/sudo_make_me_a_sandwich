@@ -351,7 +351,7 @@ put-delivery-address: get-delivery-info
 
 # Post your order; sandwich, chips and pickle
 post-items: export METHOD=$(POST)
-post-items: pc-sandwich pc-chips pc-pickle
+post-items: pc-sandwich pc-sides
 	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/Items/
 	[
 		{
@@ -639,6 +639,9 @@ choose-onions-recurse:
 	@$(info $(onions))
 
 
+### Side items
+pc-sides: pc-chips pc-pickle pc-cookie
+
 ## Selecting your chips
 chips-opts = 0 1 2 3 4 5
 
@@ -691,18 +694,17 @@ prompt-chips:
 	:
 
 choose-chips:
-	@$(eval chips = $(shell read -p 'chips> '; echo $$REPLY))
-	@$(if $(filter-out $(chips-opts), $(chips)),
-	@ $(eval chips = $(shell $(MAKE) choose-chips-recurse)))
-	@$(eval chips = $(subst 0,,$(chips)))
+	@$(eval chips = $(subst 0,,$(shell $(MAKE) choose-chips-recurse)))
 	@$(if $(chips), $(eval chips = $(word $(chips), $(CHIPS_IDS))))
+	@$(info $(chips))
 
 choose-chips-recurse:
 	@$(eval chips = $(shell read -p 'chips> '; echo $$REPLY))
-	@$(if $(filter-out $(chips-opts), $(chips)),
+	@$(if $(chips),
+	@ $(if $(filter-out $(chips-opts), $(firstword $(chips))),
+	@  $(eval chips = $(shell $(MAKE) choose-chips-recurse))),
 	@ $(eval chips = $(shell $(MAKE) choose-chips-recurse)))
-	@$(info $(chips))
-
+	@$(info $(firstword $(chips)))
 
 
 ## Selecting a pickle
@@ -756,17 +758,18 @@ prompt-pickle:
 	:
 
 choose-pickle:
-	@$(eval pickle = $(shell read -p 'pickle> '; echo $$REPLY))
-	@$(if $(filter-out $(pickle-opts), $(pickle)),
-	@ $(eval pickle = $(shell $(MAKE) choose-pickle-recurse)))
-	@$(eval pickle = $(subst 0,,$(pickle)))
+	@$(eval pickle = $(subst 0,,$(shell $(MAKE) choose-pickle-recurse)))
 	@$(if $(pickle), $(eval pickle = $(word $(pickle), $(PICKLE_IDS))))
+	@$(info $(pickle))
 
 choose-pickle-recurse:
 	@$(eval pickle = $(shell read -p 'pickle> '; echo $$REPLY))
-	@$(if $(filter-out $(pickle-opts), $(pickle)),
+	@$(if $(pickle),
+	@ $(if $(filter-out $(pickle-opts), $(firstword $(pickle))),
+	@  $(eval pickle = $(shell $(MAKE) choose-pickle-recurse))),
 	@ $(eval pickle = $(shell $(MAKE) choose-pickle-recurse)))
-	@$(info $(pickle))
+	@$(info $(firstword $(pickle)))
+
 
 ## Selecting a cookie
 cookie-opts = 0 1 2
@@ -820,17 +823,17 @@ prompt-cookie:
 	:
 
 choose-cookie:
-	@$(eval cookie = $(shell read -p 'cookie> '; echo $$REPLY))
-	@$(if $(filter-out $(cookie-opts), $(cookie)),
-	@ $(eval cookie = $(shell $(MAKE) choose-cookie-recurse)))
-	@$(eval cookie = $(subst 0,,$(cookie)))
+	@$(eval cookie = $(subst 0,,$(shell $(MAKE) choose-cookie-recurse)))
 	@$(if $(cookie), $(eval cookie = $(word $(cookie), $(COOKIE_IDS))))
+	@$(info $(cookie))
 
 choose-cookie-recurse:
 	@$(eval cookie = $(shell read -p 'cookie> '; echo $$REPLY))
-	@$(if $(filter-out $(cookie-opts), $(cookie)),
+	@$(if $(cookie),
+	@ $(if $(filter-out $(cookie-opts), $(firstword $(cookie))),
+	@  $(eval cookie = $(shell $(MAKE) choose-cookie-recurse))),
 	@ $(eval cookie = $(shell $(MAKE) choose-cookie-recurse)))
-	@$(info $(cookie))
+	@$(info $(firstword $(cookie)))
 
 
 define CC_TYPE_TABLE
