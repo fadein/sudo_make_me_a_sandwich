@@ -118,11 +118,10 @@ cURL_OPTS += --trace-ascii -
 endif
 
 define TODO
-_ Geocode addresses
-_ Return your JJ's location IDs
-_ I have *-recurse targets for the menu items; I also need to do that
-  for the billing info. If I don't get an input on the 1st attempt, the 2nd
-  and subsequent attempts won't really pass back their captured values
+_ Order a drink
+_ Leave-bread-in option
+_ Geocode delivery address
+_ Look up your JJ's location IDs
 _ query ADDR2 fields only when the corresponding ADDR1 was also blank
 _ Support JJ's gift cards
 endef
@@ -218,8 +217,8 @@ define DRY_RUN_SUCCESS =
                    \/            \/    \/    \/     \/     \/ 
 endef
 
-choose: pc-sandwich pc-chips pc-pickle pc-cookie get-JJ_LOCATION get-delivery-info get-contact-info get-payment-info
-get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
+choose: pc-sandwich pc-sides get-delivery-info get-contact-info get-payment-info
+get-delivery-info: get-JJ_LOCATION get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
 get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
 place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
@@ -237,35 +236,6 @@ has-curl:
 initial-requests:
 	$(cURL) $(cURL_OPTS) $(BASE)
 	$(cURL) $(cURL_OPTS) $(BASE)/api/Customer/
-
-echo-info:
-	@cat <<:
-	JJ_LOCATION=$(JJ_LOCATION)
-	DELIV_ADDR1=$(DELIV_ADDR1)
-	DELIV_ADDR2=$(DELIV_ADDR2)
-	DELIV_CITY=$(DELIV_CITY)
-	DELIV_STATE=$(DELIV_STATE)
-	DELIV_ZIP=$(DELIV_ZIP)
-	DELIV_COUNTRY=$(DELIV_COUNTRY)
-	CONTACT_FIRSTNAME=$(CONTACT_FIRSTNAME)
-	CONTACT_LASTNAME=$(CONTACT_LASTNAME)
-	CONTACT_EMAIL=$(CONTACT_EMAIL)
-	CONTACT_PHONE=$(CONTACT_PHONE)
-	PAYMENT_CODE=$(PAYMENT_CODE)
-	CC_NUM=$(CC_NUM)
-	CC_TYPE=$(CC_TYPE)
-	CC_CVV=$(CC_CVV)
-	CC_YEAR=$(CC_YEAR)
-	CC_MONTH=$(CC_MONTH)
-	CC_ADDR1=$(CC_ADDR1)
-	CC_ADDR2=$(CC_ADDR2)
-	CC_CITY=$(CC_CITY)
-	CC_STATE=$(CC_STATE)
-	CC_ZIP=$(CC_ZIP)
-	CC_COUNTRY=$(CC_COUNTRY)
-	TIP_AMOUNT=$(TIP_AMOUNT)
-	:
-	sleep 10
 
 negotiate-address: CheckForManualAddress ForDeliveryAddress VerifyDeliveryAddress
 CheckForManualAddress VerifyDeliveryAddress: export METHOD=$(POST)
@@ -428,6 +398,51 @@ submit-order:
 success: ; $(info $(SUCCESS)) @:
 
 dry-run-success: ; $(info $(DRY_RUN_SUCCESS)) @:
+
+
+echo-info: echo-menu-selections echo-payment
+	@sleep 10
+
+echo-menu-selections:
+	@cat <<:
+	sandwich=$(sandwich)
+	peppers=$(peppers)
+	tomatoes=$(tomatoes)
+	onions3020=$(onions3020)
+	onions3021=$(onions3021)
+	chips=$(chips)
+	pickle=$(pickle)
+	cookie=$(cookie)
+	:
+
+echo-payment:
+	@cat <<:
+	JJ_LOCATION=$(JJ_LOCATION)
+	DELIV_ADDR1=$(DELIV_ADDR1)
+	DELIV_ADDR2=$(DELIV_ADDR2)
+	DELIV_CITY=$(DELIV_CITY)
+	DELIV_STATE=$(DELIV_STATE)
+	DELIV_ZIP=$(DELIV_ZIP)
+	DELIV_COUNTRY=$(DELIV_COUNTRY)
+	CONTACT_FIRSTNAME=$(CONTACT_FIRSTNAME)
+	CONTACT_LASTNAME=$(CONTACT_LASTNAME)
+	CONTACT_EMAIL=$(CONTACT_EMAIL)
+	CONTACT_PHONE=$(CONTACT_PHONE)
+	PAYMENT_CODE=$(PAYMENT_CODE)
+	CC_NUM=$(CC_NUM)
+	CC_TYPE=$(CC_TYPE)
+	CC_CVV=$(CC_CVV)
+	CC_YEAR=$(CC_YEAR)
+	CC_MONTH=$(CC_MONTH)
+	CC_ADDR1=$(CC_ADDR1)
+	CC_ADDR2=$(CC_ADDR2)
+	CC_CITY=$(CC_CITY)
+	CC_STATE=$(CC_STATE)
+	CC_ZIP=$(CC_ZIP)
+	CC_COUNTRY=$(CC_COUNTRY)
+	TIP_AMOUNT=$(TIP_AMOUNT)
+	:
+
 
 ## The sandwich menus
 sandwich-opts = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
@@ -865,11 +880,12 @@ text-input:
 	@read -p "$(PS4)> "
 	@echo $$REPLY
 
+# Text input method #1:
 numeric-input:
 	@read -p "$(PS4)> "
 	@echo $$REPLY | tr -dc '[[:digit:]]'
 
-# Text input method #1: Password entry a la smartphones
+# Text input method #2: Password entry a la smartphone
 # Obscure all but the most recently entered character with an asterisk,
 # supporting backspace. Uses bashisms.
 secret-numeric-input:
