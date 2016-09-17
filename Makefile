@@ -525,7 +525,7 @@ choose-sandwich-recurse:
 	@$(if $(sandwich),
 	@ $(if $(filter-out $(sandwich-opts), $(sandwich)),
 	@  $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse))),
-	@  $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
+	@ $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
 	@$(info $(sandwich))
 
 # customizing the sandwich
@@ -553,20 +553,19 @@ pc-peppers: prompt-peppers choose-peppers
 prompt-peppers:
 	@cat <<:
 	
-	Do you want hot cherry peppers?
+	Add hot cherry peppers?
 	1) No           3) Regular
 	2) Go easy      4) Extra
 	:
 
 choose-peppers:
-	@$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
-	@$(if $(filter-out $(peppers-opts), $(peppers)),
-	@ $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
-	@$(eval peppers = $(word $(peppers), $(PEPPERS_IDS)))
+	@$(eval peppers = $(word $(shell $(MAKE) choose-peppers-recurse), $(PEPPERS_IDS)))
 
 choose-peppers-recurse:
-	@$(eval peppers = $(shell read -p 'peppers> '; echo $$REPLY))
-	@$(if $(filter-out $(peppers-opts), $(peppers)),
+	@$(eval peppers = $(firstword $(shell read -p 'peppers> '; echo $$REPLY)))
+	@$(if $(peppers),
+	@ $(if $(filter-out $(peppers-opts), $(peppers)),
+	@  $(eval peppers = $(shell $(MAKE) choose-peppers-recurse))),
 	@ $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
 	@$(info $(peppers))
 
@@ -591,14 +590,13 @@ prompt-tomatoes:
 	:
 
 choose-tomatoes:
-	@$(eval tomatoes = $(shell read -p 'tomatoes> '; echo $$REPLY))
-	@$(if $(filter-out $(tomatoes-opts), $(tomatoes)),
-	@ $(eval tomatoes = $(shell $(MAKE) choose-tomatoes-recurse)))
-	@$(eval tomatoes = $(word $(tomatoes), $(TOMATOES_IDS)))
+	@$(eval tomatoes = $(word $(shell $(MAKE) choose-tomatoes-recurse), $(TOMATOES_IDS)))
 
 choose-tomatoes-recurse:
-	@$(eval tomatoes = $(shell read -p 'tomatoes> '; echo $$REPLY))
-	@$(if $(filter-out $(tomatoes-opts), $(tomatoes)),
+	@$(eval tomatoes = $(firstword $(shell read -p 'tomatoes> '; echo $$REPLY)))
+	@$(if $(tomatoes),
+	@ $(if $(filter-out $(tomatoes-opts), $(tomatoes)),
+	@  $(eval tomatoes = $(shell $(MAKE) choose-tomatoes-recurse))),
 	@ $(eval tomatoes = $(shell $(MAKE) choose-tomatoes-recurse)))
 	@$(info $(tomatoes))
 
@@ -627,15 +625,16 @@ prompt-onions:
 	:
 
 choose-onions:
-	@$(eval onions = $(shell read -p 'onions> '; echo $$REPLY))
-	@$(if $(filter-out $(onions-opts), $(onions)),
-	@ $(eval onions = $(shell $(MAKE) choose-onions-recurse)))
+	@$(eval onions = $(shell $(MAKE) choose-onions-recurse))
 	@$(eval onions3020 = $(word $(onions), $(ONIONS3020_IDS)))
 	@$(eval onions3021 = $(word $(onions), $(ONIONS3021_IDS)))
 
+
 choose-onions-recurse:
-	@$(eval onions = $(shell read -p 'onions> '; echo $$REPLY))
-	@$(if $(filter-out $(onions-opts), $(onions)),
+	@$(eval onions = $(firstword $(shell read -p 'onions> '; echo $$REPLY)))
+	@$(if $(onions),
+	@ $(if $(filter-out $(onions-opts), $(onions)),
+	@  $(eval onions = $(shell $(MAKE) choose-onions-recurse))),
 	@ $(eval onions = $(shell $(MAKE) choose-onions-recurse)))
 	@$(info $(onions))
 
