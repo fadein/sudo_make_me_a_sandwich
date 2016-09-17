@@ -910,7 +910,8 @@ get-$(1)_:
 	@$$(info $$($1))
 
 get-$(1):
-	$$(eval $(1) = $$(shell $(MAKE) get-$(1)_))
+	@$$(eval $(1) = $$(shell $(MAKE) get-$(1)_))
+	@:
 endef
 
 $(eval $(call text-entry-prompt,JJ_LOCATION,"Jimmy John's location #",numeric-input))
