@@ -1,0 +1,75 @@
+{
+   "results" : [
+      {
+         "address_components" : [
+            {
+               "long_name" : "4725",
+               "short_name" : "4725",
+               "types" : [ "street_number" ]
+            },
+            {
+               "long_name" : "Lake Park Boulevard",
+               "short_name" : "Lake Park Blvd",
+               "types" : [ "route" ]
+            },
+            {
+               "long_name" : "West Valley City",
+               "short_name" : "West Valley City",
+               "types" : [ "locality", "political" ]
+            },
+            {
+               "long_name" : "Salt Lake County",
+               "short_name" : "Salt Lake County",
+               "types" : [ "administrative_area_level_2", "political" ]
+            },
+            {
+               "long_name" : "Utah",
+               "short_name" : "UT",
+               "types" : [ "administrative_area_level_1", "political" ]
+            },
+            {
+               "long_name" : "United States",
+               "short_name" : "US",
+               "types" : [ "country", "political" ]
+            },
+            {
+               "long_name" : "84120",
+               "short_name" : "84120",
+               "types" : [ "postal_code" ]
+            }
+         ],
+         "formatted_address" : "4725 Lake Park Blvd, West Valley City, UT 84120, USA",
+         "geometry" : {
+            "bounds" : {
+               "northeast" : {
+                  "lat" : 40.7120135,
+                  "lng" : -112.0041811
+               },
+               "southwest" : {
+                  "lat" : 40.7119994,
+                  "lng" : -112.0041838
+               }
+            },
+            "location" : {
+               "lat" : 40.7119994,
+               "lng" : -112.0041811
+            },
+            "location_type" : "RANGE_INTERPOLATED",
+            "viewport" : {
+               "northeast" : {
+                  "lat" : 40.71335543029149,
+                  "lng" : -112.0028334697085
+               },
+               "southwest" : {
+                  "lat" : 40.71065746970849,
+                  "lng" : -112.0055314302915
+               }
+            }
+         },
+         "partial_match" : true,
+         "place_id" : "EjQ0NzI1IExha2UgUGFyayBCbHZkLCBXZXN0IFZhbGxleSBDaXR5LCBVVCA4NDEyMCwgVVNB",
+         "types" : [ "street_address" ]
+      }
+   ],
+   "status" : "OK"
+}

@@ -40,11 +40,11 @@
 JJ_LOCATION=
 
 # Delivery address
-DELIV_ADDR1=
+DELIV_ADDR1=4725 W Lake Park Blvd
 DELIV_ADDR2=
-DELIV_CITY=
-DELIV_STATE=
-DELIV_ZIP=
+DELIV_CITY=West Valley City
+DELIV_STATE=UT
+DELIV_ZIP=84120
 DELIV_COUNTRY=USA
 
 # Your contact information
@@ -73,7 +73,7 @@ DRY_RUN=
 
 # The base URL for Jimmy John's online store
 BASE=https://online.jimmyjohns.com
-GEOCODE=https://maps.googleapis.com/maps/api/geocode/xml?address=
+GEOCODE=https://maps.googleapis.com/maps/api/geocode/json?address=
 
 .ONESHELL:
 .PHONY: me a banner TODO
@@ -977,15 +977,9 @@ get-CC_COUNTRY:
 get-LAT_LONG: get-delivery-info geocode-delivery-info
 	$(info "LAT is $(LAT) .. LNG is $(LNG)")
 
-has-xmllint:
-	@$(if $(XMLLINT), ,
-	@ $(error "I cannot find where your xmllint is installed"))
-
-geocode-delivery-info: has-xmllint
+geocode-delivery-info:
 	@$(eval GEOXML_TMP = $(shell mktemp -t geoxml_tmp.XXXXXX))
 	@$(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
 	@$(info Geocoding $(ADDR_FOR_GEOCODE))
-	@$(eval $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) > $(GEOXML_TMP))
-		LAT = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lat/child::text()' $(GEOXML_TMP));
-		LNG = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lng/child::text()' $(GEOXML_TMP)))
-	-@rm -f $(GEOXML_TMP)
+	@$(eval $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) > $(GEOXML_TMP)))
+	@$(info XML response is in $(GEOXML_TMP))
