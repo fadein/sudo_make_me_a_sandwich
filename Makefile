@@ -97,9 +97,6 @@ CONTENT_TYPE_JSON = -H 'Content-Type:application/json;charset=UTF-8'
 POST=--data @-
 PUT=-T -
 
-# xmllint is used if/when you geocode your address into lat/long to find the nearest JJ's
-XMLLINT = $(call which,xmllint)
-
 # Shut up about which directory we're in
 MAKEFLAGS += --no-print-directory
 
@@ -974,12 +971,16 @@ get-CC_COUNTRY:
 	@ $(if $(strip $(CC_COUNTRY)), ,
 	@  $(eval CC_COUNTRY = $(shell $(MAKE) get-CC_COUNTRY))))
 
-get-LAT_LONG: get-delivery-info geocode-delivery-info
-	$(info "LAT is $(LAT) .. LNG is $(LNG)")
-
-geocode-delivery-info:
-	@$(eval GEOXML_TMP = $(shell mktemp -t geoxml_tmp.XXXXXX))
+## TODO: we won't want to do all of this if JJ_LOCATION is already known
+get-LAT_LONG: get-delivery-info
 	@$(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
-	@$(info Geocoding $(ADDR_FOR_GEOCODE))
-	@$(eval $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) > $(GEOXML_TMP)))
-	@$(info XML response is in $(GEOXML_TMP))
+	@$(eval LATLNG = $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
+	@{
+	@if (lat && lng) { print lat " " lng; exit; }
+	@if ($$1 ~ "lat") { lat = $$2; sub(/,$$/, "", lat); next }
+	@if ($$1 ~ "lat") { lat = $$2; sub(/,$$/, "", lat); next }
+	@if ($$1 ~ "lng") { lng = $$2; sub(/,$$/, "", lng) }
+	@}
+	@'))
+	@$(eval LAT = $(word 1, $(LATLNG)))
+	@$(eval LNG = $(word 2, $(LATLNG)))

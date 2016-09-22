@@ -1,8 +1,0 @@
-#!/usr/bin/awk -f
-# vim: set ft=awk:
-
-{
-	if (lat && lng) { print "latitude  = " lat; print "longitude = " lng; exit; }
-	if ($1 ~ "lat") { lat = $3; sub(/,$/, "", lat); next }
-	if ($1 ~ "lng") { lng = $3; sub(/,$/, "", lng) }
-}
