@@ -40,11 +40,11 @@
 JJ_LOCATION=
 
 # Delivery address
-DELIV_ADDR1=4725 W Lake Park Blvd
+DELIV_ADDR1=358 Lauralin Drive
 DELIV_ADDR2=
-DELIV_CITY=West Valley City
+DELIV_CITY=Logan
 DELIV_STATE=UT
-DELIV_ZIP=84120
+DELIV_ZIP=84321
 DELIV_COUNTRY=USA
 
 # Your contact information
@@ -83,10 +83,10 @@ which = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,$(PATH)))))
 
 # cURL stuff - don't change unless you know what you're doing
 cURL = $(call which,curl)
-cURL_BASIC_OPTS = --progress-bar --fail
+#cURL_BASIC_OPTS = --progress-bar --fail
 cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{response_code}'                              \
-	--cookie-jar $(COOKIE_JAR) --cookie $(COOKIE_JAR)                                       \
-	-H api-key:A6750DD1-2F04-463E-8D64-6828AFB6143D                                         \
+	--cookie-jar $(COOKIE_JAR)                                                              \
+	-H 'api-key: A6750DD1-2F04-463E-8D64-6828AFB6143D'                                      \
 	-H 'Accept-Language: en-US,en;q=0.8'                                                    \
 	-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' \
 	-H 'Cache-Control: max-age=0'                                                           \
@@ -113,7 +113,7 @@ endef
 ifeq ($(DRY_RUN),)
 TARGETS = banner has-curl choose make-cookie-jar place-order submit-order success cleanup-cookie-jar
 else
-TARGETS = banner has-curl choose make-cookie-jar place-order dry-run-success cleanup-cookie-jar
+TARGETS = banner has-curl make-cookie-jar initial-requests negotiate-address 
 endif
 
 all:
@@ -201,8 +201,9 @@ define DRY_RUN_SUCCESS =
                    \/            \/    \/    \/     \/     \/ 
 endef
 
-choose: pc-sandwich pc-chips pc-pickle pc-cookie get-JJ_LOCATION get-delivery-info get-contact-info get-payment-info
+choose: pc-sandwich pc-chips pc-pickle pc-cookie
 get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
+delivery: location get-contact-info get-payment-info
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
 get-payment-info: get-PAYMENT_CODE get-CC_NUM get-CC_TYPE get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-tip-amount
 place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
@@ -818,13 +819,6 @@ choose-CC_TYPE:
 	@ $(info $(CC_TYPE))
 
 
-get-JJ_LOCATION:
-	@$(if $(JJ_LOCATION), ,
-	@ $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
-	@ $(if $(strip $(JJ_LOCATION)), ,
-	@  $(eval JJ_LOCATION = $(shell $(MAKE) get-JJ_LOCATION))))
-
-
 get-DELIV_ADDR1:
 	@$(if $(DELIV_ADDR1), ,
 	@ $(eval DELIV_ADDR1 = $(shell read -p "Delivery address 1> "; echo $$REPLY))
@@ -971,16 +965,54 @@ get-CC_COUNTRY:
 	@ $(if $(strip $(CC_COUNTRY)), ,
 	@  $(eval CC_COUNTRY = $(shell $(MAKE) get-CC_COUNTRY))))
 
+
+## Geocode the delivery address to find JJ's location
 ## TODO: we won't want to do all of this if JJ_LOCATION is already known
-get-LAT_LONG: get-delivery-info
-	@$(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
-	@$(eval LATLNG = $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
-	@{
-	@if (lat && lng) { print lat " " lng; exit; }
-	@if ($$1 ~ "lat") { lat = $$2; sub(/,$$/, "", lat); next }
-	@if ($$1 ~ "lat") { lat = $$2; sub(/,$$/, "", lat); next }
-	@if ($$1 ~ "lng") { lng = $$2; sub(/,$$/, "", lng) }
-	@}
-	@'))
-	@$(eval LAT = $(word 1, $(LATLNG)))
-	@$(eval LNG = $(word 2, $(LATLNG)))
+
+location: make-cookie-jar  get-delivery-info    initial-requests negotiate-address   get-JJ_LOCATION
+
+get-JJ_LOCATION: api-query-JJ_LOCATION
+	@$(if $(JJ_LOCATION), ,
+	@ $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
+	@ $(if $(strip $(JJ_LOCATION)), ,
+	@  $(eval JJ_LOCATION = $(shell $(MAKE) get-JJ_LOCATION))))
+
+
+LAT=41.7579498291
+LNG=-111.83466339
+debug-LAT_LNG: get-LAT_LNG
+	@$(info "LAT is $(LAT) .. LNG is $(LNG)")
+
+api-query-JJ_LOCATION: debug-LAT_LNG
+	$(info $(shell $(cURL) $(cURL_OPTS) 'https://online.jimmyjohns.com/API/Location/InVicinity/?latitude=$(LAT)&longitude=$(LNG)' |
+	sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
+	BEGIN { id = addr = city = state = ""; FS = "\"" }
+	{
+	    if (NF == 0) {
+	        if (id) { stores[id] = addr " " city ", " state }
+	        id = addr = city = state = ""
+	    }
+	    else if ($$2 ~ "^Id")           { gsub(/ /, "", $$3); id    = $$3 }
+	    else if ($$2 ~ "^AddressLine1") {                     addr  = $$4 }
+	    else if ($$2 ~ "^City")         {                     city  = $$4 }
+	    else if ($$2 ~ "^State")        {                     state = $$4 }
+	}
+	END {
+	    if (id) { stores[id] = addr " " city ", " state }
+	    for (s in stores) { print s " " stores[s] }
+	}
+	'))
+
+get-LAT_LNG: get-delivery-info
+	$(if $(and $(LAT), $(LNG)), ,
+	@ $(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
+	@ $(eval LATLNG = $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
+	@ {
+	@     if (lat && lng)  { print lat " " lng;              exit }
+	@     if ($$1 ~ "lat") { lat = $$2; sub(/,$$/, "", lat); next }
+	@     if ($$1 ~ "lat") { lat = $$2; sub(/,$$/, "", lat); next }
+	@     if ($$1 ~ "lng") { lng = $$2; sub(/,$$/, "", lng)       }
+	@ }
+	@ '))
+	@ $(eval LAT = $(word 1, $(LATLNG)))
+	@ $(eval LNG = $(word 2, $(LATLNG))))
