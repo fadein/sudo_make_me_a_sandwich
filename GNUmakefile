@@ -76,6 +76,8 @@ GEOCODE=https://maps.googleapis.com/maps/api/geocode/json?address=
 ## TODO: we won't want to do all of this if JJ_LOCATION is already known
 
 location: get-JJ_LOCATION
+	$(info JJ_LOCATION is $(JJ_LOCATION))
+
 
 get-JJ_LOCATION: prompt-LOCATIONS choose-JJ_LOCATION
 
@@ -93,25 +95,23 @@ debug-LAT_LNG: get-LAT_LNG
 # form a list of valid inputs
 prompt-LOCATIONS: export RP=)
 prompt-LOCATIONS: api-query-LOCATIONS get-LOCATIONS
-	@$(info LOCATIONS = $(LOCATIONS))
 	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
 	@  $(info $(firstword $(subst _, ,$(l)))$(RP) $(wordlist 2,20,$(subst _, ,$(l)))))
 
 get-LOCATIONS: api-query-LOCATIONS
 	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
-	@  $(eval VALID_LOC_ID = $(VALID_LOC_ID) $(firstword $(subst _, ,$(l)))))
+	@ $(eval VALID_LOC_ID = $(VALID_LOC_ID) $(firstword $(subst _, ,$(l)))))
 
 choose-JJ_LOCATION:
-	@$(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
-	@$(if $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
-	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse)))
-	@$(eval JJ_LOCATION = $(word $(JJ_LOCATION), $(VALID_LOC_ID)))
+	@$(eval JJ_LOCATION = $(shell read -p "$@ Jimmy John's location #> "; echo $$REPLY))
+	@$(if $(JJ_LOCATION), $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
+	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)")))
 
 choose-JJ_LOCATION-recurse:
-	@$(if $(JJ_LOCATION), ,
-	@ $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
-	@ $(if $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
-	@  $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse))))
+	@$(eval JJ_LOCATION = $(shell read -p "$@ Jimmy John's location #> "; echo $$REPLY))
+	@$(warning $@ VALID_LOC_ID = $(VALID_LOC_ID))
+	@$(if $(JJ_LOCATION), $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
+	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)")))
 	@$(info $(JJ_LOCATION))
 
 
