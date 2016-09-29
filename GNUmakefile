@@ -103,14 +103,13 @@ get-LOCATIONS: api-query-LOCATIONS
 	@ $(eval VALID_LOC_ID = $(VALID_LOC_ID) $(firstword $(subst _, ,$(l)))))
 
 choose-JJ_LOCATION:
-	@$(eval JJ_LOCATION = $(shell read -p "$@ Jimmy John's location #> "; echo $$REPLY))
-	@$(if $(JJ_LOCATION), $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
-	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)")))
+	@$(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))
 
 choose-JJ_LOCATION-recurse:
 	@$(eval JJ_LOCATION = $(shell read -p "$@ Jimmy John's location #> "; echo $$REPLY))
-	@$(warning $@ VALID_LOC_ID = $(VALID_LOC_ID))
-	@$(if $(JJ_LOCATION), $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
+	@$(if $(JJ_LOCATION),
+	@ $(if $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
+	@  $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))),
 	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)")))
 	@$(info $(JJ_LOCATION))
 
