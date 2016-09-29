@@ -77,11 +77,12 @@ GEOCODE=https://maps.googleapis.com/maps/api/geocode/json?address=
 
 location: get-JJ_LOCATION
 
-get-JJ_LOCATION: api-query-JJ_LOCATION
+get-JJ_LOCATION: prompt-LOCATIONS
 	@$(if $(JJ_LOCATION), ,
 	@ $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
 	@ $(if $(strip $(JJ_LOCATION)), ,
-	@  $(eval JJ_LOCATION = $(shell $(MAKE) get-JJ_LOCATION))))
+	@  $(eval JJ_LOCATION = $(shell $(MAKE) get-JJ_LOCATION)))
+	@)
 
 
 LAT=41.7579498291
@@ -89,8 +90,12 @@ LNG=-111.83466339
 debug-LAT_LNG: get-LAT_LNG
 	@$(info "LAT is $(LAT) .. LNG is $(LNG)")
 
-api-query-JJ_LOCATION: debug-LAT_LNG
-	$(info $(shell cat locations.response |
+prompt-LOCATIONS: api-query-LOCATIONS
+	$(error TODO $@)
+
+# guard this recipe body with an $(if ) on the value of LOCATIONS or perhaps even JJ_LOCATION
+api-query-LOCATIONS: get-LAT_LNG debug-LAT_LNG
+	$(eval LOCATIONS = $(shell cat locations.response |
 	sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
 	BEGIN { id = addr = city = state = ""; FS = "\"" }
 	{
