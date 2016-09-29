@@ -77,12 +77,8 @@ GEOCODE=https://maps.googleapis.com/maps/api/geocode/json?address=
 
 location: get-JJ_LOCATION
 
-get-JJ_LOCATION: prompt-LOCATIONS
-	@$(if $(JJ_LOCATION), ,
-	@ $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
-	@ $(if $(strip $(JJ_LOCATION)), ,
-	@  $(eval JJ_LOCATION = $(shell $(MAKE) get-JJ_LOCATION)))
-	@)
+get-JJ_LOCATION: prompt-LOCATIONS choose-JJ_LOCATION
+
 
 
 LAT=41.7579498291
@@ -90,28 +86,54 @@ LNG=-111.83466339
 debug-LAT_LNG: get-LAT_LNG
 	@$(info "LAT is $(LAT) .. LNG is $(LNG)")
 
-prompt-LOCATIONS: api-query-LOCATIONS
-	$(error TODO $@)
+
+
+# split $(LOCATIONS) on their separators:
+# display a prompt w/ address
+# form a list of valid inputs
+prompt-LOCATIONS: export RP=)
+prompt-LOCATIONS: api-query-LOCATIONS get-LOCATIONS
+	@$(info LOCATIONS = $(LOCATIONS))
+	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
+	@  $(info $(firstword $(subst _, ,$(l)))$(RP) $(wordlist 2,20,$(subst _, ,$(l)))))
+
+get-LOCATIONS: api-query-LOCATIONS
+	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
+	@  $(eval VALID_LOC_ID = $(VALID_LOC_ID) $(firstword $(subst _, ,$(l)))))
+
+choose-JJ_LOCATION:
+	@$(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
+	@$(if $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
+	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse)))
+	@$(eval JJ_LOCATION = $(word $(JJ_LOCATION), $(VALID_LOC_ID)))
+
+choose-JJ_LOCATION-recurse:
+	@$(if $(JJ_LOCATION), ,
+	@ $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
+	@ $(if $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
+	@  $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse))))
+	@$(info $(JJ_LOCATION))
+
 
 # guard this recipe body with an $(if ) on the value of LOCATIONS or perhaps even JJ_LOCATION
-api-query-LOCATIONS: get-LAT_LNG debug-LAT_LNG
+api-query-LOCATIONS: get-LAT_LNG
 	$(eval LOCATIONS = $(shell cat locations.response |
 	sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
 	BEGIN { id = addr = city = state = ""; FS = "\"" }
 	{
 	    if (NF == 0) {
-	        if (id) { stores[id] = addr ";" city ",;" state }
+	        if (id) { stores[id] = addr "_" city ",_" state }
 	        id = addr = city = state = ""
 	    }
-	    else if ($$2 ~ "^Id")           { gsub(/ /, "", $$3); id    = $$3 }
-	    else if ($$2 ~ "^AddressLine1") {                     addr  = $$4 }
-	    else if ($$2 ~ "^City")         {                     city  = $$4 }
-	    else if ($$2 ~ "^State")        {                     state = $$4 }
+	    else if ($$2 ~ "^Id")           { gsub(/ /, "", $$3);  id    = $$3 }
+	    else if ($$2 ~ "^AddressLine1") { gsub(/ /, "_", $$4); addr  = $$4 }
+	    else if ($$2 ~ "^City")         {                      city  = $$4 }
+	    else if ($$2 ~ "^State")        {                      state = $$4 }
 	}
 	END {
-	    ORS = "|"
-	    OFS = ";"
-	    if (id) { stores[id] = addr ";" city ",;" state }
+	    ORS = "@"
+	    OFS = "_"
+	    if (id) { stores[id] = addr "_" city ",_" state }
 	    for (s in stores) { print s, stores[s] }
 	}
 	'))
