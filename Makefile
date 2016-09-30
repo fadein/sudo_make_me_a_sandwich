@@ -40,7 +40,7 @@
 JJ_LOCATION=
 
 # Delivery address
-DELIV_ADDR1=358 Lauralin Drive
+DELIV_ADDR1=358 N. Main
 DELIV_ADDR2=
 DELIV_CITY=Logan
 DELIV_STATE=UT
@@ -83,7 +83,7 @@ which = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,$(PATH)))))
 
 # cURL stuff - don't change unless you know what you're doing
 cURL = $(call which,curl)
-#cURL_BASIC_OPTS = --progress-bar --fail
+cURL_BASIC_OPTS = --progress-bar --fail
 cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{response_code}'                              \
 	--cookie-jar $(COOKIE_JAR)                                                              \
 	-H 'api-key: A6750DD1-2F04-463E-8D64-6828AFB6143D'                                      \
@@ -225,6 +225,7 @@ initial-requests:
 negotiate-address: CheckForManualAddress ForDeliveryAddress VerifyDeliveryAddress
 CheckForManualAddress VerifyDeliveryAddress: export METHOD=$(POST)
 CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
+	$(warning --$@--)
 	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Order/$@/
 	{
 		"City" : "$(DELIV_CITY)",
@@ -966,44 +967,65 @@ get-CC_COUNTRY:
 	@  $(eval CC_COUNTRY = $(shell $(MAKE) get-CC_COUNTRY))))
 
 
+
+################################################################################
+################################################################################
+################################################################################
 ## Geocode the delivery address to find JJ's location
 ## TODO: we won't want to do all of this if JJ_LOCATION is already known
 
-location: make-cookie-jar  get-delivery-info    initial-requests negotiate-address   get-JJ_LOCATION
 
-get-JJ_LOCATION: api-query-JJ_LOCATION
-	@$(if $(JJ_LOCATION), ,
-	@ $(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
-	@ $(if $(strip $(JJ_LOCATION)), ,
-	@  $(eval JJ_LOCATION = $(shell $(MAKE) get-JJ_LOCATION))))
+## Geocode the delivery address to find JJ's location
+## TODO: because this runs within a sub-make, all of its STDOUT goes into JJ_LOCATION, and
+## I don't get to see it until after the sub-make is done
+location: make-cookie-jar  get-delivery-info    initial-requests negotiate-address
+location:
+	$(if $(JJ_LOCATION), ,
+	 $(eval JJ_LOCATION = $(shell $(MAKE) COOKIE_JAR="$(COOKIE_JAR)" get-JJ_LOCATION)))
+	$(warning JJ_LOCATION is $(JJ_LOCATION))
 
 
-LAT=41.7579498291
-LNG=-111.83466339
-debug-LAT_LNG: get-LAT_LNG
-	@$(info "LAT is $(LAT) .. LNG is $(LNG)")
+get-JJ_LOCATION: prompt-LOCATIONS choose-JJ_LOCATION
 
-api-query-JJ_LOCATION: debug-LAT_LNG
-	$(info $(shell $(cURL) $(cURL_OPTS) 'https://online.jimmyjohns.com/API/Location/InVicinity/?latitude=$(LAT)&longitude=$(LNG)' |
-	sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
-	BEGIN { id = addr = city = state = ""; FS = "\"" }
-	{
-	    if (NF == 0) {
-	        if (id) { stores[id] = addr " " city ", " state }
-	        id = addr = city = state = ""
-	    }
-	    else if ($$2 ~ "^Id")           { gsub(/ /, "", $$3); id    = $$3 }
-	    else if ($$2 ~ "^AddressLine1") {                     addr  = $$4 }
-	    else if ($$2 ~ "^City")         {                     city  = $$4 }
-	    else if ($$2 ~ "^State")        {                     state = $$4 }
-	}
-	END {
-	    if (id) { stores[id] = addr " " city ", " state }
-	    for (s in stores) { print s " " stores[s] }
-	}
-	'))
+prompt-LOCATIONS: export RP=)
+prompt-LOCATIONS: api-query-LOCATIONS get-LOCATIONS
+	$(info) $(warning --$@--)
+	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
+	@  $(info $(firstword $(subst _, ,$(l)))$(RP) $(wordlist 2,20,$(subst _, ,$(l)))))
 
-get-LAT_LNG: get-delivery-info
+get-LOCATIONS: api-query-LOCATIONS
+	$(info) $(warning --$@--)
+	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
+	@ $(eval VALID_LOC_ID = $(VALID_LOC_ID) $(firstword $(subst _, ,$(l)))))
+	$(info)$(warning VALID_LOC_ID=$(VALID_LOC_ID))
+
+# Ask JJ's for a list of nearby restaurants
+api-query-LOCATIONS: api-query-LAT_LNG
+	$(info) $(warning --$@--)
+	@$(eval LOCATIONS = $(shell $(cURL) $(cURL_OPTS) "$(BASE)/API/Location/InVicinity/?latitude=$(LAT)&longitude=$(LNG)" | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
+	@BEGIN { id = addr = city = state = ""; FS = "\"" }
+	@{
+	@    if (NF == 0) {
+	@        if (id) { stores[id] = addr "_" city ",_" state }
+	@        id = addr = city = state = ""
+	@    }
+	@    else if ($$2 ~ "^Id")           { gsub(/ /, "", $$3);  id    = $$3 }
+	@    else if ($$2 ~ "^AddressLine1") { gsub(/ /, "_", $$4); addr  = $$4 }
+	@    else if ($$2 ~ "^City")         {                      city  = $$4 }
+	@    else if ($$2 ~ "^State")        {                      state = $$4 }
+	@}
+	@END {
+	@    ORS = "@"
+	@    OFS = "_"
+	@    if (id) { stores[id] = addr "_" city ",_" state }
+	@    for (s in stores) { print s, stores[s] }
+	@}
+	@'))
+	$(warning LOCATIONS=$(LOCATIONS))
+
+# Geocode delivery address via Google's Maps API
+api-query-LAT_LNG:
+	$(info) $(warning --$@--)
 	$(if $(and $(LAT), $(LNG)), ,
 	@ $(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
 	@ $(eval LATLNG = $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
@@ -1016,3 +1038,19 @@ get-LAT_LNG: get-delivery-info
 	@ '))
 	@ $(eval LAT = $(word 1, $(LATLNG)))
 	@ $(eval LNG = $(word 2, $(LATLNG))))
+	@ $(info)
+	@ $(warning LAT=$(LAT) LNG=$(LNG))
+
+choose-JJ_LOCATION:
+	@$(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))
+
+choose-JJ_LOCATION-recurse:
+	@$(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
+	@$(if $(JJ_LOCATION),
+	@ $(if $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
+	@  $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))),
+	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)")))
+	@$(info $(JJ_LOCATION))
+
+
+# vim: set iskeyword+=-:
