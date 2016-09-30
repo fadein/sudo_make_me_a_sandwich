@@ -25,47 +25,37 @@
 ## Configuration items
 ## Hardcode values for questions you don't want to be asked each on each order
 
-# The JJ's store location number which can be found by looking for a "Location"
-# element in the JSON sent to you in a response from online.jimmyjohns.com.
-# This is NOT the same as the store number found on your receipt (that would be
-# too easy :)
-#
-# Perhaps the easiest way to discover this ID number is to visit
-# online.jimmyjohns.com in your browser with the developer tools enabled.  Get
-# into the view which shows you each URI request the browser makes as you
-# traverse their pages. Start a delivery order and enter your address. JJ's will
-# ask you to verify your address. The locationId parameter will appear in a GET
-# request to the API/Location/ resource
-# (e.g. https://online.jimmyjohns.com/API/Location/?locationId=2144).
+# The JJ's store location number is NOT the same as the store number found on
+# your receipt (that would be too easy :)
 JJ_LOCATION=
 
 # Delivery address
-DELIV_ADDR1=
+DELIV_ADDR1=421 N Main
 DELIV_ADDR2=
-DELIV_CITY=
-DELIV_STATE=
-DELIV_ZIP=
-DELIV_COUNTRY=USA
+DELIV_CITY=Logan
+DELIV_STATE=UT
+DELIV_ZIP=84321
+DELIV_COUNTRY=US
 
 # Your contact information
-CONTACT_FIRSTNAME=
-CONTACT_LASTNAME=
-CONTACT_EMAIL=
-CONTACT_PHONE=
+CONTACT_FIRSTNAME=Guy
+CONTACT_LASTNAME=Rizzo
+CONTACT_EMAIL=grizz@gmail.com
+CONTACT_PHONE=4357521160
 
 # Your payment information
 PAYMENT_CODE=CC
-CC_NUM=
-CC_TYPE=
-CC_CVV=
-CC_YEAR=
-CC_MONTH=
-CC_ADDR1=
+CC_NUM=1234 5678 9012 3456
+CC_TYPE=1
+CC_CVV=123
+CC_YEAR=2017
+CC_MONTH=01
+CC_ADDR1=421 N Main
 CC_ADDR2=
-CC_CITY=
-CC_STATE=
-CC_ZIP=
-CC_COUNTRY=
+CC_CITY=Logan
+CC_STATE=UT
+CC_ZIP=84321
+CC_COUNTRY=US
 
 # This order amount must be some value which is greater than any possible JJ's
 # order for a single meal. I blindly send this value merely to appease the
@@ -81,9 +71,8 @@ DRY_RUN=1
 
 # The base URL for Jimmy John's online store
 BASE=https://online.jimmyjohns.com
-GEOCODE=https://maps.googleapis.com/maps/api/geocode/xml?address=
+GEOCODE=https://maps.googleapis.com/maps/api/geocode/json?address=
 
-#SHELL = /home/fadein/scripts/sh
 .ONESHELL:
 .PHONY: me a banner TODO echo-info
 
@@ -94,8 +83,8 @@ which = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,$(PATH)))))
 cURL = $(call which,curl)
 cURL_BASIC_OPTS = --progress-bar --fail
 cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{response_code}'                              \
-	--cookie-jar $(COOKIE_JAR) --cookie $(COOKIE_JAR)                                       \
-	-H api-key:A6750DD1-2F04-463E-8D64-6828AFB6143D                                         \
+	--cookie-jar $(COOKIE_JAR)                                                              \
+	-H 'api-key: A6750DD1-2F04-463E-8D64-6828AFB6143D'                                      \
 	-H 'Accept-Language: en-US,en;q=0.8'                                                    \
 	-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' \
 	-H 'Cache-Control: max-age=0'                                                           \
@@ -105,9 +94,6 @@ cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{response_code}'                  
 CONTENT_TYPE_JSON = -H 'Content-Type:application/json;charset=UTF-8'
 POST=--data @-
 PUT=-T -
-
-# xmllint is used if/when you geocode your address into lat/long to find the nearest JJ's
-XMLLINT = $(call which,xmllint)
 
 # Shut up about which directory we're in
 MAKEFLAGS += --no-print-directory
@@ -120,16 +106,16 @@ endif
 define TODO
 _ Order a drink
 _ Leave-bread-in option
-_ Geocode delivery address
-_ Look up your JJ's location IDs
+X Geocode delivery address
+X Look up your JJ's location IDs
 _ query ADDR2 fields only when the corresponding ADDR1 was also blank
 _ Support JJ's gift cards
 endef
 
 ifeq ($(DRY_RUN),)
-TARGETS = banner has-curl choose make-cookie-jar place-order submit-order success cleanup-cookie-jar
+TARGETS = banner has-curl make-cookie-jar choose place-order submit-order success cleanup-cookie-jar
 else
-TARGETS = banner has-curl choose echo-info make-cookie-jar place-order dry-run-success cleanup-cookie-jar
+TARGETS = banner has-curl make-cookie-jar choose echo-info place-order dry-run-success cleanup-cookie-jar
 endif
 
 all:
@@ -217,14 +203,15 @@ define DRY_RUN_SUCCESS =
                    \/            \/    \/    \/     \/     \/ 
 endef
 
-choose: pc-sandwich pc-sides get-delivery-info get-contact-info get-payment-info
-get-delivery-info: get-JJ_LOCATION get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
+choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-payment-info
+get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
 get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
 place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
 
 make-cookie-jar:
-	$(eval COOKIE_JAR = $(shell mktemp -t cookies.XXXXXX))
+	@$(eval COOKIE_JAR = $(shell mktemp -t cookies.XXXXXX))
+	@:
 
 cleanup-cookie-jar:
 	-@rm -f $(COOKIE_JAR)
@@ -240,6 +227,7 @@ initial-requests:
 negotiate-address: CheckForManualAddress ForDeliveryAddress VerifyDeliveryAddress
 CheckForManualAddress VerifyDeliveryAddress: export METHOD=$(POST)
 CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
+	$(warning --$@--)
 	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Order/$@/
 	{
 		"City" : "$(DELIV_CITY)",
@@ -284,8 +272,9 @@ ForDeliveryAddress: get-delivery-info
 	:
 
 
+## TODO: the JJ's location variable isn't set!?!
 schedule: export METHOD=$(POST)
-schedule: get-JJ_LOCATION
+schedule: location
 	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/
 	{
 		"LocationId" : $(JJ_LOCATION),
@@ -933,7 +922,6 @@ get-$(1):
 	@:
 endef
 
-$(eval $(call text-entry-prompt,JJ_LOCATION,"Jimmy John's location #",numeric-input))
 $(eval $(call text-entry-prompt,DELIV_ADDR1,"Delivery address 1",text-input))
 $(eval $(call text-entry-prompt,DELIV_ADDR2,"Delivery address 2",text-input))
 $(eval $(call text-entry-prompt,DELIV_CITY,"Delivery city",text-input))
@@ -957,20 +945,75 @@ $(eval $(call text-entry-prompt,CC_ZIP,"Billing ZIP",numeric-input))
 $(eval $(call text-entry-prompt,CC_COUNTRY,"Billing country",text-input))
 $(eval $(call text-entry-prompt,TIP_AMOUNT,"Tip amount",text-input))
 
-get-LAT_LONG: get-delivery-info geocode-delivery-info
-	$(info "LAT is $(LAT) .. LNG is $(LNG)")
 
-has-xmllint:
-	@$(if $(XMLLINT),@:,
-	@ $(error "I cannot find where your xmllint is installed"))
+## Geocode the delivery address to find JJ's location
+location: make-cookie-jar get-delivery-info initial-requests negotiate-address
+location:
+	@$(if $(JJ_LOCATION), ,
+	@ $(eval JJ_LOCATION = $(shell 3>&1 1>&2 $(MAKE) COOKIE_JAR="$(COOKIE_JAR)" get-JJ_LOCATION)))
 
-geocode-delivery-info: has-xmllint
-	@$(eval GEOXML_TMP = $(shell mktemp -t geoxml_tmp.XXXXXX))
-	@$(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
-	@$(info Geocoding $(ADDR_FOR_GEOCODE))
-	@$(eval $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) > $(GEOXML_TMP))
-		LAT = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lat/child::text()' $(GEOXML_TMP));
-		LNG = $(shell xmllint --xpath 'GeocodeResponse/result/geometry/location/lng/child::text()' $(GEOXML_TMP)))
-	-@rm -f $(GEOXML_TMP)
+## This target is the entry point for a sub-make process which is run in the
+## case that the variable JJ_LOCATION is unset
+get-JJ_LOCATION: prompt-LOCATIONS choose-JJ_LOCATION
 
-# vim: set iskeyword+=- :
+prompt-LOCATIONS: export RP=)
+prompt-LOCATIONS: api-query-LOCATIONS get-LOCATIONS
+	@$(info )
+	@$(info At which Jimmy John's location will you place your order?)
+	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
+	@  $(info $(firstword $(subst _, ,$(l)))$(RP) $(wordlist 2,20,$(subst _, ,$(l)))))
+
+# Ask user which JJ's location will take the order
+choose-JJ_LOCATION:
+	@$(eval JJ_LOCATION = $(shell 1>&3 $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))
+
+choose-JJ_LOCATION-recurse:
+	@$(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
+	@$(if $(JJ_LOCATION),
+	@ $(if $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
+	@  $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))),
+	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)")))
+	@$(info $(JJ_LOCATION))
+
+get-LOCATIONS: api-query-LOCATIONS
+	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
+	@ $(eval VALID_LOC_ID = $(VALID_LOC_ID) $(firstword $(subst _, ,$(l)))))
+
+# Ask JJ's for a list of nearby restaurants
+api-query-LOCATIONS: api-query-LAT_LNG
+	@$(eval LOCATIONS = $(shell $(cURL) $(cURL_OPTS) "$(BASE)/API/Location/InVicinity/?latitude=$(LAT)&longitude=$(LNG)" | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
+	@BEGIN { id = addr = city = state = ""; FS = "\"" }
+	@{
+	@    if (NF == 0) {
+	@        if (id) { stores[id] = addr "_" city ",_" state }
+	@        id = addr = city = state = ""
+	@    }
+	@    else if ($$2 ~ "^Id")           { gsub(/ /, "", $$3);  id    = $$3 }
+	@    else if ($$2 ~ "^AddressLine1") { gsub(/ /, "_", $$4); addr  = $$4 }
+	@    else if ($$2 ~ "^City")         {                      city  = $$4 }
+	@    else if ($$2 ~ "^State")        {                      state = $$4 }
+	@}
+	@END {
+	@    ORS = "@"
+	@    OFS = "_"
+	@    if (id) { stores[id] = addr "_" city ",_" state }
+	@    for (s in stores) { print s, stores[s] }
+	@}
+	@'))
+
+# Geocode delivery address via Google's Maps API
+api-query-LAT_LNG:
+	@$(if $(and $(LAT), $(LNG)), ,
+	@ $(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
+	@ $(eval LATLNG = $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
+	@ {
+	@     if (lat && lng)  { print lat " " lng;              exit }
+	@     if ($$1 ~ "lat") { lat = $$2; sub(/,$$/, "", lat); next }
+	@     if ($$1 ~ "lat") { lat = $$2; sub(/,$$/, "", lat); next }
+	@     if ($$1 ~ "lng") { lng = $$2; sub(/,$$/, "", lng)       }
+	@ }
+	@ '))
+	@ $(eval LAT = $(word 1, $(LATLNG)))
+	@ $(eval LNG = $(word 2, $(LATLNG))))
+
+# vim: set iskeyword+=-:
