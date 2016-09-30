@@ -981,7 +981,7 @@ get-CC_COUNTRY:
 location: make-cookie-jar  get-delivery-info    initial-requests negotiate-address
 location:
 	$(if $(JJ_LOCATION), ,
-	 $(eval JJ_LOCATION = $(shell $(MAKE) COOKIE_JAR="$(COOKIE_JAR)" get-JJ_LOCATION)))
+	 $(eval JJ_LOCATION = $(shell 3>&1 1>&2 $(MAKE) COOKIE_JAR="$(COOKIE_JAR)" get-JJ_LOCATION)))
 	$(warning JJ_LOCATION is $(JJ_LOCATION))
 
 
@@ -992,6 +992,20 @@ prompt-LOCATIONS: api-query-LOCATIONS get-LOCATIONS
 	$(info) $(warning --$@--)
 	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
 	@  $(info $(firstword $(subst _, ,$(l)))$(RP) $(wordlist 2,20,$(subst _, ,$(l)))))
+
+
+choose-JJ_LOCATION:
+	@$(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))
+
+choose-JJ_LOCATION-recurse:
+	@$(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
+	@$(if $(JJ_LOCATION),
+	@ $(if $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
+	@  $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))),
+	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)")))
+	@$(info $(JJ_LOCATION))
+
+
 
 get-LOCATIONS: api-query-LOCATIONS
 	$(info) $(warning --$@--)
@@ -1040,17 +1054,5 @@ api-query-LAT_LNG:
 	@ $(eval LNG = $(word 2, $(LATLNG))))
 	@ $(info)
 	@ $(warning LAT=$(LAT) LNG=$(LNG))
-
-choose-JJ_LOCATION:
-	@$(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))
-
-choose-JJ_LOCATION-recurse:
-	@$(eval JJ_LOCATION = $(shell read -p "Jimmy John's location #> "; echo $$REPLY))
-	@$(if $(JJ_LOCATION),
-	@ $(if $(filter-out $(VALID_LOC_ID), $(JJ_LOCATION)),
-	@  $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)"))),
-	@ $(eval JJ_LOCATION = $(shell $(MAKE) choose-JJ_LOCATION-recurse VALID_LOC_ID="$(VALID_LOC_ID)")))
-	@$(info $(JJ_LOCATION))
-
 
 # vim: set iskeyword+=-:
