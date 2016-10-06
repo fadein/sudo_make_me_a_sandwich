@@ -69,6 +69,13 @@ MAX_ORDER_AMOUNT=30.00
 DRY_RUN=1
 
 
+ifeq ($(DRY_RUN),)
+TARGETS = banner has-curl make-cookie-jar choose place-order submit-order success cleanup-cookie-jar
+else
+TARGETS = banner has-curl make-cookie-jar choose echo-info place-order dry-run-success cleanup-cookie-jar
+endif
+
+
 # The base URL for Jimmy John's online store
 BASE=https://online.jimmyjohns.com
 GEOCODE=https://maps.googleapis.com/maps/api/geocode/json?address=
@@ -103,46 +110,6 @@ MAKEFLAGS += DEBUG=$(DEBUG)
 cURL_OPTS += --trace-ascii -
 endif
 
-define TODO
-_ Order a drink
-_ Leave-bread-in option
-X Geocode delivery address
-X Look up your JJ's location IDs
-_ query ADDR2 fields only when the corresponding ADDR1 was also blank
-_ Support JJ's gift cards
-endef
-
-ifeq ($(DRY_RUN),)
-TARGETS = banner has-curl make-cookie-jar choose place-order submit-order success cleanup-cookie-jar
-else
-TARGETS = banner has-curl make-cookie-jar choose echo-info place-order dry-run-success cleanup-cookie-jar
-endif
-
-all:
-	@echo You must be new here. Go check this out:
-	@echo     http://xkcd.com/149/
-
-me a: ; @:
-
-sandwich:
-ifneq ($(shell uname), CYGWIN_NT-6.1)
-
-ifneq ($(USER),root)
-	@echo What? Make it yourself.
-else
-	@echo Okay
-	sudo -u $(SUDO_USER) $(MAKE) $(MAKEFLAGS) $(TARGETS)
-endif
-
-else
-	@echo Okay
-	$(MAKE) $(MAKEFLAGS) $(TARGETS)
-endif
-
-
-TODO: ; $(info $(TODO)) @:
-
-banner: ; $(info $(BANNER)) @:
 
 define BANNER =
          ________________________  _______________________
@@ -202,6 +169,54 @@ define DRY_RUN_SUCCESS =
               /____  >____/  \___  >___  >___  >\___  >____ | 
                    \/            \/    \/    \/     \/     \/ 
 endef
+
+define TODO
+_ Order a drink
+_ Leave-bread-in option
+X Geocode delivery address
+X Look up your JJ's location IDs
+_ query ADDR2 fields only when the corresponding ADDR1 was also blank
+_ Support JJ's gift cards
+endef
+
+
+all:
+	@$(info You must be new here. Go check this out:)
+	@$(info     http://xkcd.com/149/)
+
+me:
+	@$(eval me = 1)
+	@:
+
+a:
+	@$(if $(me),
+	@ $(eval a = 1),
+	@ $(info Say, what?)
+	@ $(error "You're grammar ain't no good"))
+	@:
+
+sandwich:
+	@$(if $(and $(me), $(a)),,
+	@ $(info Say, what?)
+	@ $(error "You're grammar ain't no good"))
+ifneq ($(shell uname), CYGWIN_NT-6.1)
+
+ifneq ($(USER),root)
+	@$(info What? Make it yourself.) @:
+else
+	@$(info Okay.)
+	sudo -u $(SUDO_USER) $(MAKE) $(MAKEFLAGS) $(TARGETS)
+endif
+
+else
+	@$(info Okay.)
+	$(MAKE) $(MAKEFLAGS) $(TARGETS)
+endif
+
+
+TODO: ; $(info $(TODO)) @:
+
+banner: ; $(info $(BANNER)) @:
 
 choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-payment-info
 get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
