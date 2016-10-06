@@ -713,7 +713,10 @@ prompt-chips:
 	:
 
 choose-chips:
-	@$(eval chips = $(word $(shell $(MAKE) choose-chips-recurse), $(CHIPS_IDS)))
+	@$(eval chips = $(shell $(MAKE) choose-chips-recurse))
+	@$(if $(filter-out 0, $(chips)),
+	@ $(eval chips = $(word $(chips), $(CHIPS_IDS))),
+	@ $(eval chips = ))
 
 choose-chips-recurse:
 	@$(eval chips = $(firstword $(shell read -p 'chips> '; echo $$REPLY)))
@@ -775,7 +778,10 @@ prompt-pickle:
 	:
 
 choose-pickle:
-	@$(eval pickle = $(word $(shell $(MAKE) choose-pickle-recurse), $(PICKLE_IDS)))
+	@$(eval pickle = $(shell $(MAKE) choose-pickle-recurse))
+	@$(if $(filter-out 0, $(pickle)),
+	@ $(eval pickle = $(word $, $(PICKLE_IDS))),
+	@ $(eval pickle = ))
 
 choose-pickle-recurse:
 	@$(eval pickle = $(firstword $(shell read -p 'pickle> '; echo $$REPLY)))
@@ -838,7 +844,10 @@ prompt-cookie:
 	:
 
 choose-cookie:
-	@$(eval cookie = $(word $(shell $(MAKE) choose-cookie-recurse), $(COOKIE_IDS)))
+	@$(eval cookie = $(shell $(MAKE) choose-cookie-recurse))
+	@$(if $(filter-out 0, $(cookie)),
+	@ $(eval cookie = $(word $(cookie), $(COOKIE_IDS))),
+	@ $(eval cookie = ))
 
 choose-cookie-recurse:
 	@$(eval cookie = $(firstword $(shell read -p 'cookie> '; echo $$REPLY)))
