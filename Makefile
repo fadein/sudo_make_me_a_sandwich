@@ -27,14 +27,23 @@
 
 # The JJ's store location number is NOT the same as the store number found on
 # your receipt (that would be too easy :)
-JJ_LOCATION=
+JJ_LOCATION=2554
+TIP_AMOUNT=1
 
-# Delivery address
+# Delivery address Logan
 DELIV_ADDR1=421 N Main
 DELIV_ADDR2=
 DELIV_CITY=Logan
 DELIV_STATE=UT
 DELIV_ZIP=84321
+DELIV_COUNTRY=null
+
+# Delivery address Spillman
+DELIV_ADDR1=4625 Lake Park Boulevard
+DELIV_ADDR2=
+DELIV_CITY=Salt Lake City
+DELIV_STATE=UT
+DELIV_ZIP=84120
 DELIV_COUNTRY=US
 
 # Your contact information
@@ -45,7 +54,7 @@ CONTACT_PHONE=4357521160
 
 # Your payment information
 PAYMENT_CODE=CC
-CC_NUM=1234 5678 9012 3456
+CC_NUM=1234567890123456
 CC_TYPE=1
 CC_CVV=123
 CC_YEAR=2017
@@ -89,7 +98,7 @@ which = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,$(PATH)))))
 # cURL stuff - don't change unless you know what you're doing
 cURL = $(call which,curl)
 cURL_BASIC_OPTS = --progress-bar --fail
-cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{response_code}'                              \
+cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{url_effective} %{http_code}\n'               \
 	--cookie-jar $(COOKIE_JAR)                                                              \
 	-H 'api-key: A6750DD1-2F04-463E-8D64-6828AFB6143D'                                      \
 	-H 'Accept-Language: en-US,en;q=0.8'                                                    \
@@ -97,7 +106,20 @@ cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{response_code}'                  
 	-H 'Cache-Control: max-age=0'                                                           \
 	-H 'Connection: keep-alive'                                                             \
 	-H 'mimeType:application/json;charset=UTF-8'                                            \
-	-A 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.155 Safari/537.36'
+	-A 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'
+
+cURL_OPTS2 = $(cURL_BASIC_OPTS) --include -w '%{url_effective} %{http_code}\n'              \
+	--cookie-jar $(COOKIE_JAR)                                                              \
+	-H 'api-key: A6750DD1-2F04-463E-8D64-6828AFB6143D'                                      \
+	-H 'Accept-Language: en-US,en;q=0.8'                                                    \
+	-H 'Accept: application/json, text/plain, */*'                                          \
+	-H 'Connection: keep-alive'                                                             \
+	-H 'Referrer: https://online/jimmyjohns.com/'                                           \
+
+
+# XXX DEBUGGING DELETE ME
+cURL_OPTS += -o curl.out
+
 CONTENT_TYPE_JSON = -H 'Content-Type:application/json;charset=UTF-8'
 POST=--data @-
 PUT=-T -
@@ -222,7 +244,7 @@ choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-pay
 get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
 get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
-place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
+place-order: initial-requests negotiate-address schedule double-tap-location put-delivery-address post-items put-contact-info put-tip post-payment
 
 make-cookie-jar:
 	@$(eval COOKIE_JAR = $(shell mktemp -t cookies.XXXXXX))
@@ -239,7 +261,7 @@ initial-requests:
 	$(cURL) $(cURL_OPTS) $(BASE)
 	$(cURL) $(cURL_OPTS) $(BASE)/api/Customer/
 
-negotiate-address: CheckForManualAddress ForDeliveryAddress VerifyDeliveryAddress
+negotiate-address: CheckForManualAddress VerifyDeliveryAddress ForDeliveryAddress
 CheckForManualAddress VerifyDeliveryAddress: export METHOD=$(POST)
 CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
 	$(warning --$@--)
@@ -287,7 +309,6 @@ ForDeliveryAddress: get-delivery-info
 	:
 
 
-## TODO: the JJ's location variable isn't set!?!
 schedule: export METHOD=$(POST)
 schedule: location
 	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/
@@ -298,28 +319,61 @@ schedule: location
 	}
 	:
 
+# some Voodoo I'm trying out to get past put-delivery-address
+double-tap-location:
+	$(cURL) $(cURL_OPTS) $(BASE)/API/Location/?locationId=$(JJ_LOCATION)
+	$(cURL) $(cURL_OPTS) $(BASE)/API/Location/?locationId=$(JJ_LOCATION)
+
+
+# The new JSON doesn't have the following elements:
+#  ScheduleTime, OrderType
+# The new JSON adds the following elements:
+#  SaveAsDefault
+#
+# {
+# 	"Zipcode" : "$(DELIV_ZIP)",
+# 	"City" : "$(DELIV_CITY)",
+# 	"AddressLine1" : "$(DELIV_ADDR1)",
+# 	"AddressLine2" : "$(DELIV_ADDR2)",
+# 	"State" : "$(DELIV_STATE)",
+# 	"Country" : "$(DELIV_COUNTRY)",
+# 	"FriendlyName" : "",
+# 	"Longitude" : 0,
+# 	"Company" : "",
+# 	"DisplayText" : null,
+# 	"OrderType" : "Delivery",
+# 	"Index" : null,
+# 	"Latitude" : 0,
+# 	"ScheduleTime" : "ASAP",
+# 	"DeliveryInstructions" : "",
+# 	"SaveInstructions" : true,
+# 	"GateCode" : "",
+# 	"CacheAddress" : false
+# }
+#
+# I'm also trying to send the geocoded coords of the delivery address, but it's also bailing out
+# I'm not sure whether that's because it's too early in the morning, tho...
+
 put-delivery-address: export METHOD=$(PUT)
 put-delivery-address: get-delivery-info
-	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS2) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
 	{
-		"Zipcode" : "$(DELIV_ZIP)",
-		"City" : "$(DELIV_CITY)",
-		"AddressLine1" : "$(DELIV_ADDR1)",
-		"AddressLine2" : "$(DELIV_ADDR2)",
-		"State" : "$(DELIV_STATE)",
-		"Country" : "$(DELIV_COUNTRY)",
-		"FriendlyName" : "",
-		"Longitude" : 0,
-		"Company" : "",
-		"DisplayText" : null,
-		"OrderType" : "Delivery",
-		"Index" : null,
-		"Latitude" : 0,
-		"ScheduleTime" : "ASAP",
-		"DeliveryInstructions" : "",
-		"SaveInstructions" : true,
-		"GateCode" : "",
-		"CacheAddress" : false
+		"FriendlyName":"",
+		"Company":"",
+		"GateCode":"",
+		"DeliveryInstructions":"",
+		"SaveInstructions":true,
+		"SaveAsDefault":false,
+		"Index":null,
+	 	"AddressLine1":"$(DELIV_ADDR1)",
+		"AddressLine2":"$(DELIV_ADDR2)",
+	 	"City":"$(DELIV_CITY)",
+		"State":"$(DELIV_STATE)",
+	 	"Zipcode":"$(DELIV_ZIP)",
+		"Country":null,
+		"DisplayText":null,
+		"Longitude":-112.00131,
+		"Latitude":40.71132
 	}
 	:
 
@@ -405,7 +459,7 @@ dry-run-success: ; $(info $(DRY_RUN_SUCCESS)) @:
 
 
 echo-info: echo-menu-selections echo-payment
-	@sleep 10
+	@sleep 1
 
 echo-menu-selections:
 	@cat <<:
