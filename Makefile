@@ -713,17 +713,15 @@ prompt-chips:
 	:
 
 choose-chips:
-	@$(eval chips = $(subst 0,,$(shell $(MAKE) choose-chips-recurse)))
-	@$(if $(chips), $(eval chips = $(word $(chips), $(CHIPS_IDS))))
-	@$(info $(chips))
+	@$(eval chips = $(word $(shell $(MAKE) choose-chips-recurse), $(CHIPS_IDS)))
 
 choose-chips-recurse:
-	@$(eval chips = $(shell read -p 'chips> '; echo $$REPLY))
+	@$(eval chips = $(firstword $(shell read -p 'chips> '; echo $$REPLY)))
 	@$(if $(chips),
-	@ $(if $(filter-out $(chips-opts), $(firstword $(chips))),
+	@ $(if $(filter-out $(chips-opts), $(chips)),
 	@  $(eval chips = $(shell $(MAKE) choose-chips-recurse))),
 	@ $(eval chips = $(shell $(MAKE) choose-chips-recurse)))
-	@$(info $(firstword $(chips)))
+	@$(info $(chips))
 
 
 ## Selecting a pickle
@@ -777,17 +775,15 @@ prompt-pickle:
 	:
 
 choose-pickle:
-	@$(eval pickle = $(subst 0,,$(shell $(MAKE) choose-pickle-recurse)))
-	@$(if $(pickle), $(eval pickle = $(word $(pickle), $(PICKLE_IDS))))
-	@$(info $(pickle))
+	@$(eval pickle = $(word $(shell $(MAKE) choose-pickle-recurse), $(PICKLE_IDS)))
 
 choose-pickle-recurse:
-	@$(eval pickle = $(shell read -p 'pickle> '; echo $$REPLY))
+	@$(eval pickle = $(firstword $(shell read -p 'pickle> '; echo $$REPLY)))
 	@$(if $(pickle),
-	@ $(if $(filter-out $(pickle-opts), $(firstword $(pickle))),
+	@ $(if $(filter-out $(pickle-opts), $(pickle)),
 	@  $(eval pickle = $(shell $(MAKE) choose-pickle-recurse))),
 	@ $(eval pickle = $(shell $(MAKE) choose-pickle-recurse)))
-	@$(info $(firstword $(pickle)))
+	@$(info $(pickle))
 
 
 ## Selecting a cookie
@@ -842,17 +838,15 @@ prompt-cookie:
 	:
 
 choose-cookie:
-	@$(eval cookie = $(subst 0,,$(shell $(MAKE) choose-cookie-recurse)))
-	@$(if $(cookie), $(eval cookie = $(word $(cookie), $(COOKIE_IDS))))
-	@$(info $(cookie))
+	@$(eval cookie = $(word $(shell $(MAKE) choose-cookie-recurse), $(COOKIE_IDS)))
 
 choose-cookie-recurse:
-	@$(eval cookie = $(shell read -p 'cookie> '; echo $$REPLY))
+	@$(eval cookie = $(firstword $(shell read -p 'cookie> '; echo $$REPLY)))
 	@$(if $(cookie),
-	@ $(if $(filter-out $(cookie-opts), $(firstword $(cookie))),
+	@ $(if $(filter-out $(cookie-opts), $(cookie)),
 	@  $(eval cookie = $(shell $(MAKE) choose-cookie-recurse))),
 	@ $(eval cookie = $(shell $(MAKE) choose-cookie-recurse)))
-	@$(info $(firstword $(cookie)))
+	@$(info $(cookie))
 
 
 define CC_TYPE_TABLE
