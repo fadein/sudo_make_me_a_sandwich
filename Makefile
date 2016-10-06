@@ -988,25 +988,27 @@ get-LOCATIONS: api-query-LOCATIONS
 	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
 	@ $(eval VALID_LOC_ID = $(VALID_LOC_ID) $(firstword $(subst _, ,$(l)))))
 
-# Ask JJ's for a list of nearby restaurants
+# Ask JJs for a list of nearby restaurants
 api-query-LOCATIONS: api-query-LAT_LNG
 	@$(eval LOCATIONS = $(shell $(cURL) $(cURL_OPTS) "$(BASE)/API/Location/InVicinity/?latitude=$(LAT)&longitude=$(LNG)" | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
-	@BEGIN { id = addr = city = state = ""; FS = "\"" }
+	@function compare(i1, v1, i2, v2) { return (v1 - v2) }
+	@BEGIN { id = addr = city = state = dist = ""; FS = "\"" }
 	@{
 	@    if (NF == 0) {
-	@        if (id) { stores[id] = addr "_" city ",_" state }
-	@        id = addr = city = state = ""
+	@        if (id) { stores[id] = addr "_" city ",_" state "_[" dist "_mi.]"; dists[id] = dist }
+	@        id = addr = city = state = dist = ""
 	@    }
 	@    else if ($$2 ~ "^Id")           { gsub(/ /, "", $$3);  id    = $$3 }
 	@    else if ($$2 ~ "^AddressLine1") { gsub(/ /, "_", $$4); addr  = $$4 }
-	@    else if ($$2 ~ "^City")         {                      city  = $$4 }
-	@    else if ($$2 ~ "^State")        {                      state = $$4 }
+	@    else if ($$2 ~ "^City")         { gsub(/ /, "_", $$4); city  = $$4 }
+	@    else if ($$2 ~ "^State")        { state                      = $$4 }
+	@    else if ($$2 ~ "^Distance")     { dist       = sprintf("%.2f", $$3)}
 	@}
 	@END {
-	@    ORS = "@"
-	@    OFS = "_"
-	@    if (id) { stores[id] = addr "_" city ",_" state }
-	@    for (s in stores) { print s, stores[s] }
+	@    ORS = "@"; OFS = "_"
+	@    if (id) { stores[id] = addr "_" city ",_" state "_[" dist "_mi.]"; dists[id] = dist }
+	@    PROCINFO["sorted_in"] = "compare"
+	@    for (s in dists) { print s, stores[s] }
 	@}
 	@'))
 
