@@ -218,6 +218,20 @@ sandwich:
 	@ $(info Say, what?)
 	@ $(error "You're grammar ain't no good"))
 
+ifneq ($(shell uname), CYGWIN_NT-6.1)
+
+ifneq ($(USER),root)
+	@$(info What? Make it yourself.) @:
+else
+	@$(info Okay.)
+	sudo -u $(SUDO_USER) $(MAKE) $(MAKEFLAGS) $(TARGETS)
+endif
+
+else
+	@$(info Okay.)
+	$(MAKE) $(MAKEFLAGS) $(TARGETS)
+endif
+
 ifeq ($(DRY_RUN),)
 TARGETS = banner has-curl make-cookie-jar choose place-order submit-order success cleanup-cookie-jar
 else
@@ -233,20 +247,6 @@ TODO: ; $(info $(TODO)) @:
 banner: ; $(info $(BANNER)) @:
 success: ; $(info $(SUCCESS)) @:
 dry-run-success: ; $(info $(DRY_RUN_SUCCESS)) @:
-
-ifneq ($(shell uname), CYGWIN_NT-6.1)
-
-ifneq ($(USER),root)
-	@$(info What? Make it yourself.) @:
-else
-	@$(info Okay.)
-	sudo -u $(SUDO_USER) $(MAKE) $(MAKEFLAGS) $(TARGETS)
-endif
-
-else
-	@$(info Okay.)
-	$(MAKE) $(MAKEFLAGS) $(TARGETS)
-endif
 
 ################################################################################
 ###############################	debugging helps ################################
