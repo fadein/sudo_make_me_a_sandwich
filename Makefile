@@ -69,8 +69,9 @@ CC_COUNTRY=
 # JJ's costs more than this, just tick this up a bit (and God help you).
 MAX_ORDER_AMOUNT=30.00
 
-# Don't actually go through with the order; don't click "Submit" at the end
-DRY_RUN=1
+# When this is set to a value, we won't actually go through with the order;
+# don't click "Submit" at the end
+DRY_RUN=
 
 ################################################################################
 #########################  /User configuration items  ##########################
