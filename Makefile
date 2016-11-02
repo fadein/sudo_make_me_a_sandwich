@@ -27,10 +27,10 @@
 
 # The JJ's store location number is NOT the same as the store number found on
 # your receipt (that would be too easy :)
-JJ_LOCATION=2554
 TIP_AMOUNT=1
 
 # Delivery address Logan
+JJ_LOCATION=3866
 DELIV_ADDR1=421 N Main
 DELIV_ADDR2=
 DELIV_CITY=Logan
@@ -39,12 +39,25 @@ DELIV_ZIP=84321
 DELIV_COUNTRY=null
 
 # Delivery address Spillman
+JJ_LOCATION=2554
 DELIV_ADDR1=4625 Lake Park Boulevard
 DELIV_ADDR2=
 DELIV_CITY=Salt Lake City
 DELIV_STATE=UT
 DELIV_ZIP=84120
 DELIV_COUNTRY=US
+
+# Delivery address West Valley
+JJ_LOCATION=2760
+DELIV_ADDR1=2789 Centerbrook Dr
+DELIV_ADDR2=
+DELIV_CITY=West Valley City
+DELIV_STATE=UT
+DELIV_ZIP=84119
+DELIV_COUNTRY=US
+
+
+
 
 # Your contact information
 CONTACT_FIRSTNAME=Guy
@@ -115,14 +128,14 @@ cURL_OPTS2 = $(cURL_BASIC_OPTS) --include -w '%{url_effective} %{http_code}\n'  
 	-H 'Accept: application/json, text/plain, */*'                                          \
 	-H 'Connection: keep-alive'                                                             \
 	-H 'Referrer: https://online/jimmyjohns.com/'                                           \
+	-H 'Origin: https://online/jimmyjohns.com/' \
+	-H 'Accept-Encoding: gzip, deflate, sdch' \
+	-A 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36' \
+	--trace -
 
-
-# XXX DEBUGGING DELETE ME
-cURL_OPTS += -o curl.out
-
-CONTENT_TYPE_JSON = -H 'Content-Type:application/json;charset=UTF-8'
+CONTENT_TYPE_JSON = -H 'Content-Type: application/json;charset=UTF-8'
 POST=--data @-
-PUT=-T -
+PUT=-T .
 
 # Shut up about which directory we're in
 MAKEFLAGS += --no-print-directory
@@ -350,32 +363,20 @@ double-tap-location:
 # 	"GateCode" : "",
 # 	"CacheAddress" : false
 # }
-#
-# I'm also trying to send the geocoded coords of the delivery address, but it's also bailing out
-# I'm not sure whether that's because it's too early in the morning, tho...
 
+
+## THIS one works
+## all of my PUTs are failing because JJ's doesn't like my use of -T -
+## if I switch to --data, this works again
 put-delivery-address: export METHOD=$(PUT)
 put-delivery-address: get-delivery-info
-	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS2) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
-	{
-		"FriendlyName":"",
-		"Company":"",
-		"GateCode":"",
-		"DeliveryInstructions":"",
-		"SaveInstructions":true,
-		"SaveAsDefault":false,
-		"Index":null,
-	 	"AddressLine1":"$(DELIV_ADDR1)",
-		"AddressLine2":"$(DELIV_ADDR2)",
-	 	"City":"$(DELIV_CITY)",
-		"State":"$(DELIV_STATE)",
-	 	"Zipcode":"$(DELIV_ZIP)",
-		"Country":null,
-		"DisplayText":null,
-		"Longitude":-112.00131,
-		"Latitude":40.71132
-	}
-	:
+	cat <<STUFF > /tmp/crap
+	{"AddressLine1":"421 West 300 North","AddressLine2":"","City":"Logan","State":"UT","Zipcode":"84321","Country":"","DisplayText":"421 W 300 N, Logan, UT 84321, USA","Longitude":-111.84571310000001,"Latitude":41.7375107,"FriendlyName":"","Company":"","GateCode":"","DeliveryInstructions":"","SaveInstructions":true,"CacheAddress":true}
+	STUFF
+	$(cURL) -N -X PUT --data @/tmp/crap $(cURL_OPTS2) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
+
+
+
 
 # Post your order; sandwich, chips and pickle
 post-items: export METHOD=$(POST)
