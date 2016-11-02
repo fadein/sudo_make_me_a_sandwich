@@ -834,7 +834,7 @@ prompt-pickle:
 choose-pickle:
 	@$(eval pickle = $(shell $(MAKE) choose-pickle-recurse))
 	@$(if $(filter-out 0, $(pickle)),
-	@ $(eval pickle = $(word $, $(PICKLE_IDS))),
+	@ $(eval pickle = $(word $(pickle), $(PICKLE_IDS))),
 	@ $(eval pickle = ))
 
 choose-pickle-recurse:
