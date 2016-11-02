@@ -121,21 +121,9 @@ cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{url_effective} %{http_code}\n'   
 	-H 'mimeType:application/json;charset=UTF-8'                                            \
 	-A 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'
 
-cURL_OPTS2 = $(cURL_BASIC_OPTS) --include -w '%{url_effective} %{http_code}\n'              \
-	--cookie-jar $(COOKIE_JAR)                                                              \
-	-H 'api-key: A6750DD1-2F04-463E-8D64-6828AFB6143D'                                      \
-	-H 'Accept-Language: en-US,en;q=0.8'                                                    \
-	-H 'Accept: application/json, text/plain, */*'                                          \
-	-H 'Connection: keep-alive'                                                             \
-	-H 'Referrer: https://online/jimmyjohns.com/'                                           \
-	-H 'Origin: https://online/jimmyjohns.com/' \
-	-H 'Accept-Encoding: gzip, deflate, sdch' \
-	-A 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36' \
-	--trace -
-
 CONTENT_TYPE_JSON = -H 'Content-Type: application/json;charset=UTF-8'
 POST=--data @-
-PUT=-T .
+PUT=-X PUT --data @-
 
 # Shut up about which directory we're in
 MAKEFLAGS += --no-print-directory
@@ -257,7 +245,7 @@ choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-pay
 get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
 get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
-place-order: initial-requests negotiate-address schedule double-tap-location put-delivery-address post-items put-contact-info put-tip post-payment
+place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
 
 make-cookie-jar:
 	@$(eval COOKIE_JAR = $(shell mktemp -t cookies.XXXXXX))
@@ -332,49 +320,28 @@ schedule: location
 	}
 	:
 
-# some Voodoo I'm trying out to get past put-delivery-address
-double-tap-location:
-	$(cURL) $(cURL_OPTS) $(BASE)/API/Location/?locationId=$(JJ_LOCATION)
-	$(cURL) $(cURL_OPTS) $(BASE)/API/Location/?locationId=$(JJ_LOCATION)
 
-
-# The new JSON doesn't have the following elements:
-#  ScheduleTime, OrderType
-# The new JSON adds the following elements:
-#  SaveAsDefault
-#
-# {
-# 	"Zipcode" : "$(DELIV_ZIP)",
-# 	"City" : "$(DELIV_CITY)",
-# 	"AddressLine1" : "$(DELIV_ADDR1)",
-# 	"AddressLine2" : "$(DELIV_ADDR2)",
-# 	"State" : "$(DELIV_STATE)",
-# 	"Country" : "$(DELIV_COUNTRY)",
-# 	"FriendlyName" : "",
-# 	"Longitude" : 0,
-# 	"Company" : "",
-# 	"DisplayText" : null,
-# 	"OrderType" : "Delivery",
-# 	"Index" : null,
-# 	"Latitude" : 0,
-# 	"ScheduleTime" : "ASAP",
-# 	"DeliveryInstructions" : "",
-# 	"SaveInstructions" : true,
-# 	"GateCode" : "",
-# 	"CacheAddress" : false
-# }
-
-
-## THIS one works
-## all of my PUTs are failing because JJ's doesn't like my use of -T -
-## if I switch to --data, this works again
 put-delivery-address: export METHOD=$(PUT)
 put-delivery-address: get-delivery-info
-	cat <<STUFF | $(cURL) -X PUT --data @- $(cURL_OPTS2) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
-	{"AddressLine1":"421 West 300 North","AddressLine2":"","City":"Logan","State":"UT","Zipcode":"84321","Country":"","DisplayText":"421 W 300 N, Logan, UT 84321, USA","Longitude":-111.84571310000001,"Latitude":41.7375107,"FriendlyName":"","Company":"","GateCode":"","DeliveryInstructions":"","SaveInstructions":true,"CacheAddress":true}
-	STUFF
-
-
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
+	{
+		"AddressLine1":"$(DELIV_ADDR1)",
+		"AddressLine2":"$(DELIV_ADDR2)",
+		"City":"$(DELIV_CITY)",
+		"State":"$(DELIV_STATE)",
+		"Zipcode":"$(DELIV_ZIP)",
+		"Country":"$(DELIV_COUNTRY)",
+		"DisplayText":"",
+		"Longitude":0,
+		"Latitude":0,
+		"FriendlyName":"",
+		"Company":"",
+		"GateCode":"",
+		"DeliveryInstructions":"",
+		"SaveInstructions":true,
+		"CacheAddress":true
+	}
+	:
 
 
 # Post your order; sandwich, chips and pickle
@@ -1019,7 +986,7 @@ $(eval $(call text-entry-prompt,TIP_AMOUNT,"Tip amount",text-input))
 
 
 ## Geocode the delivery address to find JJ's location
-location: make-cookie-jar get-delivery-info initial-requests negotiate-address
+location: | make-cookie-jar get-delivery-info initial-requests negotiate-address
 location:
 	@$(if $(JJ_LOCATION), ,
 	@ $(eval JJ_LOCATION = $(shell 3>&1 1>&2 $(MAKE) COOKIE_JAR="$(COOKIE_JAR)" get-JJ_LOCATION)))
@@ -1075,7 +1042,7 @@ api-query-LOCATIONS: api-query-LAT_LNG
 	@}
 	@'))
 
-# Geocode delivery address via Google's Maps API
+# Geocode delivery address via the Maps API provided by Google
 api-query-LAT_LNG:
 	@$(if $(and $(LAT), $(LNG)), ,
 	@ $(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
