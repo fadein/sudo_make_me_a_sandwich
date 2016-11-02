@@ -39,7 +39,7 @@ DELIV_ADDR2=
 DELIV_CITY=
 DELIV_STATE=
 DELIV_ZIP=
-DELIV_COUNTRY=
+DELIV_COUNTRY=US
 
 # Your contact information
 CONTACT_FIRSTNAME=
@@ -1004,7 +1004,7 @@ choose-CC_TYPE:
 location: | make-cookie-jar get-delivery-info initial-requests negotiate-address
 location:
 	@$(if $(JJ_LOCATION), ,
-	@ $(eval JJ_LOCATION = $(shell 3>&1 1>&2 $(MAKE) COOKIE_JAR="$(COOKIE_JAR)" get-JJ_LOCATION)))
+	@ $(eval JJ_LOCATION = $(shell 3>&1 1>&2 $(MAKE) COOKIE_JAR="$(COOKIE_JAR)" DELIV_ADDR1="$(DELIV_ADDR1)" DELIV_CITY="$(DELIV_CITY)" DELIV_STATE="$(DELIV_STATE)" DELIV_ZIP=$(DELIV_ZIP) get-JJ_LOCATION)))
 
 ## This target is the entry point for a sub-make process which is run in the
 ## case that the variable JJ_LOCATION is unset
