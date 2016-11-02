@@ -8,13 +8,15 @@ Presently, this Makefile lets you:
 3. Choose your favorite Jimmy Chips
 4. Order a delicious pickle (or not)
 5. Order a giant cookie
+6. Select the nearest JJ's location to your delivery address
 
 It simply depends upon:
 * GNU Make
 * sudo (don't worry, root privs are dropped before we get to the net)
 * cURL
-* coreutils (or busybox)
-* a POSIX-compatible shell (or busybox)
+* coreutils
+* a POSIX-compatible shell
+* GNU AWK
 
 The dependencies are minimal because I like my software the same way I like my
 sandwiches: freaky fast.
@@ -47,11 +49,18 @@ The trickiest piece of information to come up with is the four-digit Jimmy
 John's Location ID. It is, unfortunately, not the same four-digit number which
 is printed on your JJ's receipt.
 
-Perhaps the easiest way to discover this ID number is to visit
-online.jimmyjohns.com in your browser with the developer tools enabled.  Get
-into the view which shows you each URI request the browser makes as you
-traverse their pages. Start a delivery order and enter your address. If you
-haven't used this address before, JJ's will ask you to verify your address on a
-page that says "VERIFY ADDRESS". The locationId parameter will appear in a GET
-request to the API/Location/ URI after you click the "CONFIRM ADDRESS" button
-(e.g. `https://online.jimmyjohns.com/API/Location/?locationId=2144`).
+The latest version geocodes your delivery address through the Google Maps geocode API
+and returns a list of the nearest JJ's restaraunts to you, sorted by distance
+from your ZIP code. There is (allegedly) a limit to the number of times you can use this
+API in one day, and these extra HTTP requests increase the amount of time standing between
+you and your freaky-fast sub. If you
+
+## New in v1.3(beta)
+
+* Input handling is in general much improved
+* Rudimentary input validation on all text-entry fields
+  (i.e. numeric fields accept only digits; an empty line causes the prompt to
+  be repeated)
+* Sensitive information (e.g. credit card number, CCV number) is obscured as
+  you type álàsmartphone password field
+* Geolocation and restaraunt location selection is implemented

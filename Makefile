@@ -21,63 +21,45 @@
 # SOFTWARE.
 
 
-
-## Configuration items
-## Hardcode values for questions you don't want to be asked each on each order
+################################################################################
+##########################  User configuration items  ##########################
+################################################################################
+## Hardcoded answers to questions you don't want to be asked each on each order
 
 # The JJ's store location number is NOT the same as the store number found on
 # your receipt (that would be too easy :)
-TIP_AMOUNT=1
+# This is the number you are asked to input at the JJ's store location prompt.
+# Hardcoding this value is a nice shortcut in the case where you always use
+# this program for deliveries to the same physical location.
+JJ_LOCATION=
 
-# Delivery address Logan
-JJ_LOCATION=3866
-DELIV_ADDR1=421 N Main
+# Delivery address
+DELIV_ADDR1=
 DELIV_ADDR2=
-DELIV_CITY=Logan
-DELIV_STATE=UT
-DELIV_ZIP=84321
-DELIV_COUNTRY=null
-
-# Delivery address Spillman
-JJ_LOCATION=2554
-DELIV_ADDR1=4625 Lake Park Boulevard
-DELIV_ADDR2=
-DELIV_CITY=Salt Lake City
-DELIV_STATE=UT
-DELIV_ZIP=84120
-DELIV_COUNTRY=US
-
-# Delivery address West Valley
-JJ_LOCATION=2760
-DELIV_ADDR1=2789 Centerbrook Dr
-DELIV_ADDR2=
-DELIV_CITY=West Valley City
-DELIV_STATE=UT
-DELIV_ZIP=84119
-DELIV_COUNTRY=US
-
-
-
+DELIV_CITY=
+DELIV_STATE=
+DELIV_ZIP=
+DELIV_COUNTRY=
 
 # Your contact information
-CONTACT_FIRSTNAME=Guy
-CONTACT_LASTNAME=Rizzo
-CONTACT_EMAIL=grizz@gmail.com
-CONTACT_PHONE=4357521160
+CONTACT_FIRSTNAME=
+CONTACT_LASTNAME=
+CONTACT_EMAIL=
+CONTACT_PHONE=
 
 # Your payment information
 PAYMENT_CODE=CC
-CC_NUM=1234567890123456
-CC_TYPE=1
-CC_CVV=123
-CC_YEAR=2017
-CC_MONTH=01
-CC_ADDR1=421 N Main
+CC_NUM=
+CC_TYPE=
+CC_CVV=
+CC_YEAR=
+CC_MONTH=
+CC_ADDR1=
 CC_ADDR2=
-CC_CITY=Logan
-CC_STATE=UT
-CC_ZIP=84321
-CC_COUNTRY=US
+CC_CITY=
+CC_STATE=
+CC_ZIP=
+CC_COUNTRY=
 
 # This order amount must be some value which is greater than any possible JJ's
 # order for a single meal. I blindly send this value merely to appease the
@@ -90,25 +72,32 @@ MAX_ORDER_AMOUNT=30.00
 # Don't actually go through with the order; don't click "Submit" at the end
 DRY_RUN=1
 
+################################################################################
+#########################  /User configuration items  ##########################
+################################################################################
 
-ifeq ($(DRY_RUN),)
-TARGETS = banner has-curl make-cookie-jar choose place-order submit-order success cleanup-cookie-jar
-else
-TARGETS = banner has-curl make-cookie-jar choose echo-info place-order dry-run-success cleanup-cookie-jar
-endif
 
+# Use a single shell process for the entire recipe; if this target is not
+# present, this Makefile breaks and you will get funny error messages!
+.ONESHELL:
+
+# Technically, every target in this Makefile is phony
+.PHONY: me a banner TODO echo-info
+
+# Shut up about which directory we're in
+MAKEFLAGS += --no-print-directory
+
+# Helper macro to search $PATH for an executable
+which = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,$(PATH)))))
 
 # The base URL for Jimmy John's online store
 BASE=https://online.jimmyjohns.com
+
+# URL to the Google location API; converts delivery address into coordinates
 GEOCODE=https://maps.googleapis.com/maps/api/geocode/json?address=
 
-.ONESHELL:
-.PHONY: me a banner TODO echo-info
 
-# helper macro to search $PATH for an executable
-which = $(firstword $(wildcard $(addsuffix /$(1),$(subst :, ,$(PATH)))))
-
-# cURL stuff - don't change unless you know what you're doing
+# cURL options - don't change these unless you know what you're doing
 cURL = $(call which,curl)
 cURL_BASIC_OPTS = --progress-bar --fail
 cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{url_effective} %{http_code}\n'               \
@@ -118,21 +107,22 @@ cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{url_effective} %{http_code}\n'   
 	-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' \
 	-H 'Cache-Control: max-age=0'                                                           \
 	-H 'Connection: keep-alive'                                                             \
-	-H 'mimeType:application/json;charset=UTF-8'                                            \
+	-H 'mimeType: application/json;charset=UTF-8'                                            \
 	-A 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'
-
 CONTENT_TYPE_JSON = -H 'Content-Type: application/json;charset=UTF-8'
 POST=--data @-
 PUT=-X PUT --data @-
 
-# Shut up about which directory we're in
-MAKEFLAGS += --no-print-directory
-
+# Debug mode is enabled by
 ifdef DEBUG
 MAKEFLAGS += DEBUG=$(DEBUG)
 cURL_OPTS += --trace-ascii -
 endif
 
+
+################################################################################
+############################### pretty pictures ################################
+################################################################################
 
 define BANNER =
          ________________________  _______________________
@@ -142,55 +132,55 @@ define BANNER =
       {{ {{ {{ {{ {{ {{  {{   {{   }}  }} {{ {{ }} {{ { }} }}
        {{ {{ {{~~~ {~~{{~~{{`~~,}}  }}  }} }} {{ }} {{ }} }}
      {{ {{ {{~~~~~~~~~  {{`~~,}}  }} ,~~~~~'  `~~~~~, } }}
-         `~~~~~' `~~'   `~~   ~~~`~~~ (=======) `~~, (===)~~` __   ___  
-     `~~~~~(=========) ~~~~~~`  ,~~~~~~`    (=====) ,~~~~`   /_ | |__ \ 
-      (=======)~___~(=====)~~___ _~~(=========)~~__~~(======)_| |    ) |
-       (  .   .         .  ,   `;       .      ,         )\ / / |   / / 
-        (        ,          .   ;     ,           .     )\ V /| |_ / /_ 
-         (_____________________,_______________________)  \_/ |_(_)____|
-            use ctrl-c to exit
+         `~~~~~' `~~'   `~~   ~~~`~~~ (=======) `~~, (===)~~` __   ____   ___
+     `~~~~~(=========) ~~~~~~`  ,~~~~~~`    (=====) ,~~~~`   /_ | |___ \ / _ \
+      (=======)~___~(=====)~~___ _~~(=========)~~__~~(======)_| |   __) | | ) |
+       (  .   .         .  ,   `;       .      ,         )\ / / |  |__ <| |< <
+        (        ,          .   ;     ,           .     )\ V /| |_ ___) | | ) |
+         (_____________________,_______________________)  \_/ |_(_)____/| ||_/
+            use ctrl-c to exit                                          |_|
 endef
 
 define SUCCESS =
-        _      _                                           _             
-         `.   /    __.  ,   . .___         __.  .___    ___/   ___  .___ 
-           `./   .'   \ |   | /   \      .'   \ /   \  /   | .'   ` /   \ 
+        _      _                                           _
+         `.   /    __.  ,   . .___         __.  .___    ___/   ___  .___
+           `./   .'   \ |   | /   \      .'   \ /   \  /   | .'   ` /   \
            ,'    |    | |   | |   '      |    | |   ' ,'   | |----' |   '
-        _-'       `._.' `._/| /           `._.' /     `___,' `.___, /    
-                                                           `             
-                                                 
+        _-'       `._.' `._/| /           `._.' /     `___,' `.___, /
+                                                           `
+
                             ,  _  /   ___    ____
-                            |  |  |  /   `  (    
-                            `  ^  ' |    |  `--. 
+                            |  |  |  /   `  (
+                            `  ^  ' |    |  `--.
                              \/ \/  `.__/| \___.'
-                                                 
-                                                       ,__         .  
-         ____ ,   .   ___    ___    ___    ____   ____ /  ` ,   .  |  
-        (     |   | .'   ` .'   ` .'   `  (      (     |__  |   |  |  
-        `--.  |   | |      |      |----'  `--.   `--.  |    |   |  |  
+
+                                                       ,__         .
+         ____ ,   .   ___    ___    ___    ____   ____ /  ` ,   .  |
+        (     |   | .'   ` .'   ` .'   `  (      (     |__  |   |  |
+        `--.  |   | |      |      |----'  `--.   `--.  |    |   |  |
        \___.' `._/|  `._.'  `._.' `.___, \___.' \___.' |    `._/| /\__
-                                                       /              
+                                                       /
 endef
 
 define DRY_RUN_SUCCESS =
-                       _____.___.                    
-                       \__  |   | ____  __ _________ 
-                        /   |   |/  _ \|  |  \_  __ \ 
+                       _____.___.
+                       \__  |   | ____  __ _________
+                        /   |   |/  _ \|  |  \_  __ \
                         \____   (  <_> )  |  /|  | \/
-                        / ______|\____/|____/ |__|   
-                        \/                           
-                .___                                            
-              __| _/______ ___.__.         _______ __ __  ____  
-             / __ |\_  __ <   |  |  ______ \_  __ \  |  \/    \ 
-            / /_/ | |  | \/\___  | /_____/  |  | \/  |  /   |  \ 
+                        / ______|\____/|____/ |__|
+                        \/
+                .___
+              __| _/______ ___.__.         _______ __ __  ____
+             / __ |\_  __ <   |  |  ______ \_  __ \  |  \/    \
+            / /_/ | |  | \/\___  | /_____/  |  | \/  |  /   |  \
             \____ | |__|   / ____|          |__|  |____/|___|  /
-                 \/        \/                                \/ 
+                 \/        \/                                \/
                                                           .___
                 ________ __   ____  ____  ____   ____   __| _/
-               /  ___/  |  \_/ ___\/ ___\/ __ \_/ __ \ / __ | 
-               \___ \|  |  /\  \__\  \__\  ___/\  ___// /_/ | 
-              /____  >____/  \___  >___  >___  >\___  >____ | 
-                   \/            \/    \/    \/     \/     \/ 
+               /  ___/  |  \_/ ___\/ ___\/ __ \_/ __ \ / __ |
+               \___ \|  |  /\  \__\  \__\  ___/\  ___// /_/ |
+              /____  >____/  \___  >___  >___  >\___  >____ |
+                   \/            \/    \/    \/     \/     \/
 endef
 
 define TODO
@@ -202,6 +192,10 @@ _ query ADDR2 fields only when the corresponding ADDR1 was also blank
 _ Support JJ's gift cards
 endef
 
+
+################################################################################
+##################### how to order a sandwich, decomposed ######################
+################################################################################
 
 all:
 	@$(info You must be new here. Go check this out:)
@@ -222,6 +216,23 @@ sandwich:
 	@$(if $(and $(me), $(a)),,
 	@ $(info Say, what?)
 	@ $(error "You're grammar ain't no good"))
+
+ifeq ($(DRY_RUN),)
+TARGETS = banner has-curl make-cookie-jar choose place-order submit-order success cleanup-cookie-jar
+else
+TARGETS = banner has-curl make-cookie-jar choose echo-info place-order dry-run-success cleanup-cookie-jar
+endif
+
+choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-payment-info
+get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
+get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
+get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
+place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
+TODO: ; $(info $(TODO)) @:
+banner: ; $(info $(BANNER)) @:
+success: ; $(info $(SUCCESS)) @:
+dry-run-success: ; $(info $(DRY_RUN_SUCCESS)) @:
+
 ifneq ($(shell uname), CYGWIN_NT-6.1)
 
 ifneq ($(USER),root)
@@ -236,16 +247,61 @@ else
 	$(MAKE) $(MAKEFLAGS) $(TARGETS)
 endif
 
+################################################################################
+###############################	debugging helps ################################
+################################################################################
 
-TODO: ; $(info $(TODO)) @:
+echo-info: echo-menu-selections echo-payment
+	@sleep 1
 
-banner: ; $(info $(BANNER)) @:
+echo-menu-selections:
+	@cat <<:
+	sandwich=$(sandwich)
+	peppers=$(peppers)
+	tomatoes=$(tomatoes)
+	onions3020=$(onions3020)
+	onions3021=$(onions3021)
+	chips=$(chips)
+	pickle=$(pickle)
+	cookie=$(cookie)
+	:
 
-choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-payment-info
-get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
-get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
-get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
-place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
+echo-payment:
+	@cat <<:
+	JJ_LOCATION=$(JJ_LOCATION)
+	DELIV_ADDR1=$(DELIV_ADDR1)
+	DELIV_ADDR2=$(DELIV_ADDR2)
+	DELIV_CITY=$(DELIV_CITY)
+	DELIV_STATE=$(DELIV_STATE)
+	DELIV_ZIP=$(DELIV_ZIP)
+	DELIV_COUNTRY=$(DELIV_COUNTRY)
+	CONTACT_FIRSTNAME=$(CONTACT_FIRSTNAME)
+	CONTACT_LASTNAME=$(CONTACT_LASTNAME)
+	CONTACT_EMAIL=$(CONTACT_EMAIL)
+	CONTACT_PHONE=$(CONTACT_PHONE)
+	PAYMENT_CODE=$(PAYMENT_CODE)
+	CC_NUM=$(CC_NUM)
+	CC_TYPE=$(CC_TYPE)
+	CC_CVV=$(CC_CVV)
+	CC_YEAR=$(CC_YEAR)
+	CC_MONTH=$(CC_MONTH)
+	CC_ADDR1=$(CC_ADDR1)
+	CC_ADDR2=$(CC_ADDR2)
+	CC_CITY=$(CC_CITY)
+	CC_STATE=$(CC_STATE)
+	CC_ZIP=$(CC_ZIP)
+	CC_COUNTRY=$(CC_COUNTRY)
+	TIP_AMOUNT=$(TIP_AMOUNT)
+	:
+
+
+################################################################################
+######################### cURL-related utility targets #########################
+################################################################################
+
+has-curl:
+	@$(if $(cURL),@:,
+	@ $(error "I cannot find where your cURL is installed"))
 
 make-cookie-jar:
 	@$(eval COOKIE_JAR = $(shell mktemp -t cookies.XXXXXX))
@@ -254,9 +310,10 @@ make-cookie-jar:
 cleanup-cookie-jar:
 	-@rm -f $(COOKIE_JAR)
 
-has-curl:
-	@$(if $(cURL),@:,
-	@ $(error "I cannot find where your cURL is installed"))
+
+################################################################################
+############################ talking to JJ's server ############################
+################################################################################
 
 initial-requests:
 	$(cURL) $(cURL_OPTS) $(BASE)
@@ -265,7 +322,6 @@ initial-requests:
 negotiate-address: CheckForManualAddress VerifyDeliveryAddress ForDeliveryAddress
 CheckForManualAddress VerifyDeliveryAddress: export METHOD=$(POST)
 CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
-	$(warning --$@--)
 	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Order/$@/
 	{
 		"City" : "$(DELIV_CITY)",
@@ -285,7 +341,6 @@ CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
 		"Longitude" : 0
 	}
 	:
-
 
 ForDeliveryAddress: export METHOD=$(POST)
 ForDeliveryAddress: get-delivery-info
@@ -309,7 +364,6 @@ ForDeliveryAddress: get-delivery-info
 	}
 	:
 
-
 schedule: export METHOD=$(POST)
 schedule: location
 	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/
@@ -319,7 +373,6 @@ schedule: location
 		"ScheduleTime" : "ASAP"
 	}
 	:
-
 
 put-delivery-address: export METHOD=$(PUT)
 put-delivery-address: get-delivery-info
@@ -342,7 +395,6 @@ put-delivery-address: get-delivery-info
 		"CacheAddress":true
 	}
 	:
-
 
 # Post your order; sandwich, chips and pickle
 post-items: export METHOD=$(POST)
@@ -420,54 +472,10 @@ post-payment: get-payment-info
 submit-order:
 	$(cURL) $(cURL_OPTS) $(BASE)/api/Order/Submit/
 
-success: ; $(info $(SUCCESS)) @:
 
-dry-run-success: ; $(info $(DRY_RUN_SUCCESS)) @:
-
-
-echo-info: echo-menu-selections echo-payment
-	@sleep 1
-
-echo-menu-selections:
-	@cat <<:
-	sandwich=$(sandwich)
-	peppers=$(peppers)
-	tomatoes=$(tomatoes)
-	onions3020=$(onions3020)
-	onions3021=$(onions3021)
-	chips=$(chips)
-	pickle=$(pickle)
-	cookie=$(cookie)
-	:
-
-echo-payment:
-	@cat <<:
-	JJ_LOCATION=$(JJ_LOCATION)
-	DELIV_ADDR1=$(DELIV_ADDR1)
-	DELIV_ADDR2=$(DELIV_ADDR2)
-	DELIV_CITY=$(DELIV_CITY)
-	DELIV_STATE=$(DELIV_STATE)
-	DELIV_ZIP=$(DELIV_ZIP)
-	DELIV_COUNTRY=$(DELIV_COUNTRY)
-	CONTACT_FIRSTNAME=$(CONTACT_FIRSTNAME)
-	CONTACT_LASTNAME=$(CONTACT_LASTNAME)
-	CONTACT_EMAIL=$(CONTACT_EMAIL)
-	CONTACT_PHONE=$(CONTACT_PHONE)
-	PAYMENT_CODE=$(PAYMENT_CODE)
-	CC_NUM=$(CC_NUM)
-	CC_TYPE=$(CC_TYPE)
-	CC_CVV=$(CC_CVV)
-	CC_YEAR=$(CC_YEAR)
-	CC_MONTH=$(CC_MONTH)
-	CC_ADDR1=$(CC_ADDR1)
-	CC_ADDR2=$(CC_ADDR2)
-	CC_CITY=$(CC_CITY)
-	CC_STATE=$(CC_STATE)
-	CC_ZIP=$(CC_ZIP)
-	CC_COUNTRY=$(CC_COUNTRY)
-	TIP_AMOUNT=$(TIP_AMOUNT)
-	:
-
+################################################################################
+############################## taking your order ###############################
+################################################################################
 
 ## The sandwich menus
 sandwich-opts = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
@@ -542,7 +550,7 @@ define SANDWICH_JSON
       ]
 endef
 
-pc-sandwich: prompt-sandwich choose-sandwich prompt-customize-sandwich
+pc-sandwich: prompt-sandwich choose-sandwich customize-sandwich
 
 prompt-sandwich:
 	@cat <<:
@@ -568,46 +576,10 @@ choose-sandwich-recurse:
 	@ $(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse)))
 	@$(info $(sandwich))
 
-# customizing the sandwich
-prompt-customize-sandwich: customize-sandwich
-
 leave-bread-in = 0
 cut-in-half = 0
-#TODO: this extra level of indirection is to allow me to (hopefully)
-# skip these extra questions and use default values if the user
-# doesn't care to deviate from the default values
+
 customize-sandwich: pc-tomatoes pc-onions pc-peppers
-
-
-## Hot Cherry Peppers - the default is No Peppers
-peppers = 23557
-
-define PEPPERS_IDS
-	23557 23427 23425 23428
-endef
-
-peppers-opts = 1 2 3 4
-
-pc-peppers: prompt-peppers choose-peppers
-
-prompt-peppers:
-	@cat <<:
-	
-	Add hot cherry peppers?
-	1) No           3) Regular
-	2) Go easy      4) Extra
-	:
-
-choose-peppers:
-	@$(eval peppers = $(word $(shell $(MAKE) choose-peppers-recurse), $(PEPPERS_IDS)))
-
-choose-peppers-recurse:
-	@$(eval peppers = $(firstword $(shell read -p 'peppers> '; echo $$REPLY)))
-	@$(if $(peppers),
-	@ $(if $(filter-out $(peppers-opts), $(peppers)),
-	@  $(eval peppers = $(shell $(MAKE) choose-peppers-recurse))),
-	@ $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
-	@$(info $(peppers))
 
 
 ## Tomatoes - the default is Regular Tomatoes
@@ -639,6 +611,7 @@ choose-tomatoes-recurse:
 	@  $(eval tomatoes = $(shell $(MAKE) choose-tomatoes-recurse))),
 	@ $(eval tomatoes = $(shell $(MAKE) choose-tomatoes-recurse)))
 	@$(info $(tomatoes))
+
 
 ## Onions - the default is No Onions
 onions3021 = 23559
@@ -677,6 +650,37 @@ choose-onions-recurse:
 	@  $(eval onions = $(shell $(MAKE) choose-onions-recurse))),
 	@ $(eval onions = $(shell $(MAKE) choose-onions-recurse)))
 	@$(info $(onions))
+
+
+## Hot Cherry Peppers - the default is No Peppers
+peppers = 23557
+
+define PEPPERS_IDS
+	23557 23427 23425 23428
+endef
+
+peppers-opts = 1 2 3 4
+
+pc-peppers: prompt-peppers choose-peppers
+
+prompt-peppers:
+	@cat <<:
+	
+	Add hot cherry peppers?
+	1) No           3) Regular
+	2) Go easy      4) Extra
+	:
+
+choose-peppers:
+	@$(eval peppers = $(word $(shell $(MAKE) choose-peppers-recurse), $(PEPPERS_IDS)))
+
+choose-peppers-recurse:
+	@$(eval peppers = $(firstword $(shell read -p 'peppers> '; echo $$REPLY)))
+	@$(if $(peppers),
+	@ $(if $(filter-out $(peppers-opts), $(peppers)),
+	@  $(eval peppers = $(shell $(MAKE) choose-peppers-recurse))),
+	@ $(eval peppers = $(shell $(MAKE) choose-peppers-recurse)))
+	@$(info $(peppers))
 
 
 ### Side items
@@ -879,29 +883,11 @@ choose-cookie-recurse:
 	@$(info $(cookie))
 
 
-define CC_TYPE_TABLE
-1) American Express       3) Mastercard              5) Diners
-2) Visa                   4) Discover
-endef
+################################################################################
+#######################	billing and delivery information #######################
+################################################################################
 
-define CC_TYPE_IDS
-	Amex Visa Mastercard Discover Diners
-endef
-
-get-CC_TYPE:
-	@$(if $(CC_TYPE), ,
-	@ $(info $(CC_TYPE_TABLE))
-	@ $(eval CC_TYPE = $(word $(shell $(MAKE) choose-CC_TYPE), $(CC_TYPE_IDS))))
-
-choose-CC_TYPE:
-	@$(eval CC_TYPE = $(shell read -p 'Credit card type> '; echo $$REPLY))
-	@$(if $(CC_TYPE),
-	@ $(if $(filter-out 1 2 3 4 5, $(CC_TYPE)),
-	@  $(eval CC_TYPE = $(shell $(MAKE) choose-CC_TYPE))),
-	@  $(eval CC_TYPE = $(shell $(MAKE) choose-CC_TYPE)))
-	@  $(info $(firstword $(CC_TYPE)))
-
-
+## Text input macros
 # Text input method #0:
 # Simply read a bit of text with a fancy prompt
 text-input:
@@ -985,6 +971,34 @@ $(eval $(call text-entry-prompt,CC_COUNTRY,"Billing country",text-input))
 $(eval $(call text-entry-prompt,TIP_AMOUNT,"Tip amount",text-input))
 
 
+# CC type prompt
+define CC_TYPE_TABLE
+1) American Express       3) Mastercard              5) Diners
+2) Visa                   4) Discover
+endef
+
+define CC_TYPE_IDS
+	Amex Visa Mastercard Discover Diners
+endef
+
+get-CC_TYPE:
+	@$(if $(CC_TYPE), ,
+	@ $(info $(CC_TYPE_TABLE))
+	@ $(eval CC_TYPE = $(word $(shell $(MAKE) choose-CC_TYPE), $(CC_TYPE_IDS))))
+
+choose-CC_TYPE:
+	@$(eval CC_TYPE = $(shell read -p 'Credit card type> '; echo $$REPLY))
+	@$(if $(CC_TYPE),
+	@ $(if $(filter-out 1 2 3 4 5, $(CC_TYPE)),
+	@  $(eval CC_TYPE = $(shell $(MAKE) choose-CC_TYPE))),
+	@  $(eval CC_TYPE = $(shell $(MAKE) choose-CC_TYPE)))
+	@  $(info $(firstword $(CC_TYPE)))
+
+
+################################################################################
+######## Possibly the first Makefile which can geocode its own location ########
+################################################################################
+
 ## Geocode the delivery address to find JJ's location
 location: | make-cookie-jar get-delivery-info initial-requests negotiate-address
 location:
@@ -998,7 +1012,7 @@ get-JJ_LOCATION: prompt-LOCATIONS choose-JJ_LOCATION
 prompt-LOCATIONS: export RP=)
 prompt-LOCATIONS: api-query-LOCATIONS get-LOCATIONS
 	@$(info )
-	@$(info At which Jimmy John's location will you place your order?)
+	@$(info "At which Jimmy John's location will you place your order?")
 	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
 	@  $(info $(firstword $(subst _, ,$(l)))$(RP) $(wordlist 2,20,$(subst _, ,$(l)))))
 
@@ -1018,7 +1032,7 @@ get-LOCATIONS: api-query-LOCATIONS
 	@$(foreach l,$(shell echo $(LOCATIONS) | tr @ \\n),
 	@ $(eval VALID_LOC_ID = $(VALID_LOC_ID) $(firstword $(subst _, ,$(l)))))
 
-# Ask JJs for a list of nearby restaurants
+# Ask JJs for a list of nearby restaurants, parse JSON with gawk
 api-query-LOCATIONS: api-query-LAT_LNG
 	@$(eval LOCATIONS = $(shell $(cURL) $(cURL_OPTS) "$(BASE)/API/Location/InVicinity/?latitude=$(LAT)&longitude=$(LNG)" | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
 	@function compare(i1, v1, i2, v2) { return (v1 - v2) }
@@ -1057,4 +1071,4 @@ api-query-LAT_LNG:
 	@ $(eval LAT = $(word 1, $(LATLNG)))
 	@ $(eval LNG = $(word 2, $(LATLNG))))
 
-# vim: set iskeyword+=-:
+# vim: set iskeyword+=- noexpandtab :
