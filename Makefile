@@ -108,7 +108,7 @@ cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{url_effective} %{http_code}\n'   
 	-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' \
 	-H 'Cache-Control: max-age=0'                                                           \
 	-H 'Connection: keep-alive'                                                             \
-	-H 'mimeType: application/json;charset=UTF-8'                                            \
+	-H 'mimeType: application/json;charset=UTF-8'                                           \
 	-A 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'
 CONTENT_TYPE_JSON = -H 'Content-Type: application/json;charset=UTF-8'
 POST=--data @-
@@ -145,7 +145,7 @@ endef
 define SUCCESS =
         _      _                                           _
          `.   /    __.  ,   . .___         __.  .___    ___/   ___  .___
-           `./   .'   \ |   | /   \      .'   \ /   \  /   | .'   ` /   \
+           `./   .'   \ |   | /   \      .'   \ /   \  /   | .'   ` /   \ 
            ,'    |    | |   | |   '      |    | |   ' ,'   | |----' |   '
         _-'       `._.' `._/| /           `._.' /     `___,' `.___, /
                                                            `
@@ -166,14 +166,14 @@ endef
 define DRY_RUN_SUCCESS =
                        _____.___.
                        \__  |   | ____  __ _________
-                        /   |   |/  _ \|  |  \_  __ \
+                        /   |   |/  _ \|  |  \_  __ \ 
                         \____   (  <_> )  |  /|  | \/
                         / ______|\____/|____/ |__|
                         \/
                 .___
               __| _/______ ___.__.         _______ __ __  ____
-             / __ |\_  __ <   |  |  ______ \_  __ \  |  \/    \
-            / /_/ | |  | \/\___  | /_____/  |  | \/  |  /   |  \
+             / __ |\_  __ <   |  |  ______ \_  __ \  |  \/    \ 
+            / /_/ | |  | \/\___  | /_____/  |  | \/  |  /   |  \ 
             \____ | |__|   / ____|          |__|  |____/|___|  /
                  \/        \/                                \/
                                                           .___
