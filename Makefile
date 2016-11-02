@@ -370,10 +370,9 @@ double-tap-location:
 ## if I switch to --data, this works again
 put-delivery-address: export METHOD=$(PUT)
 put-delivery-address: get-delivery-info
-	cat <<STUFF > /tmp/crap
+	cat <<STUFF | $(cURL) -X PUT --data @- $(cURL_OPTS2) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
 	{"AddressLine1":"421 West 300 North","AddressLine2":"","City":"Logan","State":"UT","Zipcode":"84321","Country":"","DisplayText":"421 W 300 N, Logan, UT 84321, USA","Longitude":-111.84571310000001,"Latitude":41.7375107,"FriendlyName":"","Company":"","GateCode":"","DeliveryInstructions":"","SaveInstructions":true,"CacheAddress":true}
 	STUFF
-	$(cURL) -N -X PUT --data @/tmp/crap $(cURL_OPTS2) $(CONTENT_TYPE_JSON) $(BASE)/api/Order/DeliveryAddress/
 
 
 
