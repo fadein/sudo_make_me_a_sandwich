@@ -245,9 +245,9 @@ TARGETS = banner has-curl make-cookie-jar choose echo-info place-order dry-run-s
 endif
 
 choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-payment-info
-get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
+get-delivery-info: get-DELIV_ADDR1 get-DELIV_ADDR2 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
-get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
+get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_MONTH get-CC_YEAR get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
 place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
 TODO: ; $(info $(TODO)) @:
 banner: ; $(info $(BANNER)) @:
@@ -955,7 +955,7 @@ get-$(1):
 endef
 
 $(eval $(call text-entry-prompt,DELIV_ADDR1,"Delivery address 1",text-input))
-$(eval $(call text-entry-prompt,DELIV_ADDR2,"Delivery address 2",text-input))
+$(eval $(call text-entry-prompt,DELIV_ADDR2,"Delivery address 2 (enter 'N/A' to skip)",text-input))
 $(eval $(call text-entry-prompt,DELIV_CITY,"Delivery city",text-input))
 $(eval $(call text-entry-prompt,DELIV_STATE,"Delivery state",text-input))
 $(eval $(call text-entry-prompt,DELIV_ZIP,"Delivery ZIP",numeric-input))
