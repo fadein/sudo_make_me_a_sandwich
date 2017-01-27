@@ -73,6 +73,12 @@ MAX_ORDER_AMOUNT=30.00
 # don't click "Submit" at the end
 DRY_RUN=
 
+# The shell script snippets within this Makefile make use of Bashisms for
+# performance reasons.
+# Uncomment this line if you are on a Debian-derived Linux distro since
+# /bin/sh will be symlinked to /bin/dash
+SHELL=/bin/bash
+
 ################################################################################
 #########################  /User configuration items  ##########################
 ################################################################################
