@@ -169,6 +169,16 @@ define SUCCESS =
                                                        /
 endef
 
+define DRY_RUN_BANNER =
+     __  __   _       _                 __                         ______
+    / /_/ /  (_)__   (_)__   ___ _  ___/ /_____ __  ______ _____  / / / /
+   / __/ _ \/ (_-<  / (_-<  / _ `/ / _  / __/ // / / __/ // / _ \/_/_/_/
+   \__/_//_/_/___/ /_/___/  \_,_/  \_,_/_/  \_, / /_/  \_,_/_//_(_|_|_)
+                                           /___/
+
+
+endef
+
 define DRY_RUN_SUCCESS =
                        _____.___.
                        \__  |   | ____  __ _________
@@ -241,7 +251,7 @@ endif
 ifeq ($(DRY_RUN),)
 TARGETS = banner has-curl make-cookie-jar choose place-order submit-order success cleanup-cookie-jar
 else
-TARGETS = banner has-curl make-cookie-jar choose echo-info place-order dry-run-success cleanup-cookie-jar
+TARGETS = dry-run banner has-curl make-cookie-jar choose echo-info place-order dry-run-success cleanup-cookie-jar
 endif
 
 choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-payment-info
@@ -252,6 +262,7 @@ place-order: initial-requests negotiate-address schedule put-delivery-address po
 TODO: ; $(info $(TODO)) @:
 banner: ; $(info $(BANNER)) @:
 success: ; $(info $(SUCCESS)) @:
+dry-run: ; $(info $(DRY_RUN_BANNER)) @:
 dry-run-success: ; $(info $(DRY_RUN_SUCCESS)) @:
 
 ################################################################################
