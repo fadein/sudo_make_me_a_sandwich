@@ -245,7 +245,7 @@ TARGETS = banner has-curl make-cookie-jar choose echo-info place-order dry-run-s
 endif
 
 choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-payment-info
-get-delivery-info: get-DELIV_ADDR1 get-DELIV_ADDR2 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
+get-delivery-info: get-DELIV_ADDR1 get-DELIV_ADDR2 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY get-DELIV_INSTRUCTIONS
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
 get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_MONTH get-CC_YEAR get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
 place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
@@ -282,6 +282,7 @@ echo-payment:
 	DELIV_STATE=$(DELIV_STATE)
 	DELIV_ZIP=$(DELIV_ZIP)
 	DELIV_COUNTRY=$(DELIV_COUNTRY)
+	DELIV_INSTRUCTIONS=$(DELIV_INSTRUCTIONS)
 	CONTACT_FIRSTNAME=$(CONTACT_FIRSTNAME)
 	CONTACT_LASTNAME=$(CONTACT_LASTNAME)
 	CONTACT_EMAIL=$(CONTACT_EMAIL)
@@ -338,7 +339,7 @@ CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
 		"Zipcode" : "$(DELIV_ZIP)",
 		"Country" : "$(DELIV_COUNTRY)",
 		"DisplayText" : "",
-		"DeliveryInstructions" : "",
+		"DeliveryInstructions" : "$(DELIV_INSTRUCTIONS)",
 		"Company" : "",
 		"SaveInstructions" : true,
 		"FriendlyName" : "",
@@ -360,7 +361,7 @@ ForDeliveryAddress: get-delivery-info
 		"Zipcode" : "$(DELIV_ZIP)",
 		"Country" : "$(DELIV_COUNTRY)",
 		"DisplayText" : "",
-		"DeliveryInstructions" : "",
+		"DeliveryInstructions" : "$(DELIV_INSTRUCTIONS)",
 		"Company" : "",
 		"SaveInstructions" : true,
 		"FriendlyName" : "",
@@ -397,7 +398,7 @@ put-delivery-address: get-delivery-info
 		"FriendlyName":"",
 		"Company":"",
 		"GateCode":"",
-		"DeliveryInstructions":"",
+		"DeliveryInstructions":"$(DELIV_INSTRUCTIONS)",
 		"SaveInstructions":true,
 		"CacheAddress":true
 	}
@@ -960,6 +961,7 @@ $(eval $(call text-entry-prompt,DELIV_CITY,"Delivery city",text-input))
 $(eval $(call text-entry-prompt,DELIV_STATE,"Delivery state",text-input))
 $(eval $(call text-entry-prompt,DELIV_ZIP,"Delivery ZIP",numeric-input))
 $(eval $(call text-entry-prompt,DELIV_COUNTRY,"Delivery country",text-input))
+$(eval $(call text-entry-prompt,DELIV_INSTRUCTIONS,"Delivery instructions (enter 'N/A' to skip)",text-input))
 $(eval $(call text-entry-prompt,CONTACT_FIRSTNAME,"Your first name",text-input))
 $(eval $(call text-entry-prompt,CONTACT_LASTNAME,"Your last name",text-input))
 $(eval $(call text-entry-prompt,CONTACT_EMAIL,"Your email address",text-input))
