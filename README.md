@@ -49,13 +49,15 @@ The trickiest piece of information to come up with is the four-digit Jimmy
 John's Location ID. It is, unfortunately, not the same four-digit number which
 is printed on your JJ's receipt.
 
-The latest version geocodes your delivery address through the Google Maps geocode API
-and returns a list of the nearest JJ's restaraunts to you, sorted by distance
-from your ZIP code. There is (allegedly) a limit to the number of times you can use this
-API in one day, and these extra HTTP requests increase the amount of time standing between
-you and your freaky-fast sub. If you
+The latest version of this Makefile geocodes your delivery address through the
+Google Maps geocode API and returns a list of the nearest JJ's restaraunts to
+you, sorted by distance from your ZIP code. There is a (generous) limit to the
+number of times you can use this API in one day, and these extra HTTP requests
+increase the amount of time standing between you and your freaky-fast sub. If
+you always have your deliveries go to the same place, you can hardcode the
+Location ID in the Makefile.
 
-## New in v1.3(beta)
+## New in v1.3
 
 * Input handling is in general much improved
 * Rudimentary input validation on all text-entry fields
