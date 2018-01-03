@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Copyright (c) 2016 Erik Falor
+# Copyright (c) 2018 Erik Falor
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@
 
 # The JJ's store location number is NOT the same as the store number found on
 # your receipt (that would be too easy :)
+#
 # This is the number you are asked to input at the JJ's store location prompt.
 # Hardcoding this value is a nice shortcut in the case where you always use
 # this program for deliveries to the same physical location.
@@ -39,6 +40,7 @@ DELIV_ADDR2=
 DELIV_CITY=
 DELIV_STATE=
 DELIV_ZIP=
+DELIV_INSTR=
 DELIV_COUNTRY=US
 
 # Your contact information
@@ -59,7 +61,8 @@ CC_ADDR2=
 CC_CITY=
 CC_STATE=
 CC_ZIP=
-CC_COUNTRY=
+CC_COUNTRY=US
+TIP_AMOUNT=
 
 # This order amount must be some value which is greater than any possible JJ's
 # order for a single meal. I blindly send this value merely to appease the
@@ -102,19 +105,22 @@ GEOCODE=https://maps.googleapis.com/maps/api/geocode/json?address=
 cURL = $(call which,curl)
 cURL_BASIC_OPTS = --progress-bar --fail
 cURL_OPTS = $(cURL_BASIC_OPTS) --include -w '%{url_effective} %{http_code}\n'               \
-	--cookie-jar $(COOKIE_JAR)                                                              \
+	-b $(COOKIE_JAR) -c $(COOKIE_JAR)                                                       \
 	-H 'api-key: A6750DD1-2F04-463E-8D64-6828AFB6143D'                                      \
+	-H 'Origin: https://online.jimmyjohns.com'                                              \
+	-H 'Referer: https://online.jimmyjohns.com'                                             \
 	-H 'Accept-Language: en-US,en;q=0.8'                                                    \
 	-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' \
 	-H 'Cache-Control: max-age=0'                                                           \
 	-H 'Connection: keep-alive'                                                             \
 	-H 'mimeType: application/json;charset=UTF-8'                                           \
-	-A 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36'
+	-A 'Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
 CONTENT_TYPE_JSON = -H 'Content-Type: application/json;charset=UTF-8'
 POST=--data @-
 PUT=-X PUT --data @-
 
-# Debug mode is enabled by
+# Debug mode is enabled by setting the variable DEBUG to a non-empty value
+DEBUG=
 ifdef DEBUG
 MAKEFLAGS += DEBUG=$(DEBUG)
 cURL_OPTS += --trace-ascii -
@@ -133,13 +139,13 @@ define BANNER =
       {{ {{ {{ {{ {{ {{  {{   {{   }}  }} {{ {{ }} {{ { }} }}
        {{ {{ {{~~~ {~~{{~~{{`~~,}}  }}  }} }} {{ }} {{ }} }}
      {{ {{ {{~~~~~~~~~  {{`~~,}}  }} ,~~~~~'  `~~~~~, } }}
-         `~~~~~' `~~'   `~~   ~~~`~~~ (=======) `~~, (===)~~` __   ____   ___
-     `~~~~~(=========) ~~~~~~`  ,~~~~~~`    (=====) ,~~~~`   /_ | |___ \ / _ \ 
-      (=======)~___~(=====)~~___ _~~(=========)~~__~~(======)_| |   __) | | ) |
-       (  .   .         .  ,   `;       .      ,         )\ / / |  |__ <| |< <
-        (        ,          .   ;     ,           .     )\ V /| |_ ___) | | ) |
-         (_____________________,_______________________)  \_/ |_(_)____/| ||_/
-            use ctrl-c to exit                                          |_|
+         `~~~~~' `~~'   `~~   ~~~`~~~ (=======) `~~, (===)~~` __   ____
+     `~~~~~(=========) ~~~~~~`  ,~~~~~~`    (=====) ,~~~~`   /_ | |___ \ 
+      (=======)~___~(=====)~~___ _~~(=========)~~__~~(======)_| |   __) |
+       (  .   .         .  ,   `;       .      ,         )\ / / |  |__ <
+        (        ,          .   ;     ,           .     )\ V /| |_ ___) |
+         (_____________________,_______________________)  \_/ |_(_)____/
+            use ctrl-c to exit
 endef
 
 define SUCCESS =
@@ -332,7 +338,7 @@ CheckForManualAddress VerifyDeliveryAddress: get-delivery-info
 		"Zipcode" : "$(DELIV_ZIP)",
 		"Country" : "$(DELIV_COUNTRY)",
 		"DisplayText" : "",
-		"DeliveryInstructions" : "",
+		"DeliveryInstructions" : "$(DELIV_INSTR)",
 		"Company" : "",
 		"SaveInstructions" : true,
 		"FriendlyName" : "",
@@ -354,7 +360,7 @@ ForDeliveryAddress: get-delivery-info
 		"Zipcode" : "$(DELIV_ZIP)",
 		"Country" : "$(DELIV_COUNTRY)",
 		"DisplayText" : "",
-		"DeliveryInstructions" : "",
+		"DeliveryInstructions" : "$(DELIV_INSTR)",
 		"Company" : "",
 		"SaveInstructions" : true,
 		"FriendlyName" : "",
@@ -954,6 +960,7 @@ $(eval $(call text-entry-prompt,DELIV_CITY,"Delivery city",text-input))
 $(eval $(call text-entry-prompt,DELIV_STATE,"Delivery state",text-input))
 $(eval $(call text-entry-prompt,DELIV_ZIP,"Delivery ZIP",numeric-input))
 $(eval $(call text-entry-prompt,DELIV_COUNTRY,"Delivery country",text-input))
+$(eval $(call text-entry-prompt,DELIV_INSTR,"Delivery instructions",text-input))
 $(eval $(call text-entry-prompt,CONTACT_FIRSTNAME,"Your first name",text-input))
 $(eval $(call text-entry-prompt,CONTACT_LASTNAME,"Your last name",text-input))
 $(eval $(call text-entry-prompt,CONTACT_EMAIL,"Your email address",text-input))
@@ -1001,6 +1008,8 @@ choose-CC_TYPE:
 ################################################################################
 
 ## Geocode the delivery address to find JJ's location
+# NOTE: the pipe in in the prerequisites list introduces "order only" prerequisites
+#       GNU Make manual 4.3 https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html
 location: | make-cookie-jar get-delivery-info initial-requests negotiate-address
 location:
 	@$(if $(JJ_LOCATION), ,
