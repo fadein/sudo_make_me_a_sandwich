@@ -245,7 +245,7 @@ TARGETS = banner has-curl make-cookie-jar choose echo-info place-order dry-run-s
 endif
 
 choose: pc-sandwich pc-sides get-delivery-info location get-contact-info get-payment-info
-get-delivery-info: get-DELIV_ADDR1 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
+get-delivery-info: get-DELIV_ADDR1 get-DELIV_ADDR2 get-DELIV_CITY get-DELIV_STATE get-DELIV_ZIP get-DELIV_COUNTRY
 get-contact-info: get-CONTACT_FIRSTNAME get-CONTACT_LASTNAME get-CONTACT_EMAIL get-CONTACT_PHONE
 get-payment-info: get-PAYMENT_CODE get-CC_TYPE get-CC_NUM get-CC_CVV get-CC_YEAR get-CC_MONTH get-CC_ADDR1 get-CC_CITY get-CC_STATE get-CC_ZIP get-CC_COUNTRY get-TIP_AMOUNT
 place-order: initial-requests negotiate-address schedule put-delivery-address post-items put-contact-info put-tip post-payment
@@ -266,8 +266,7 @@ echo-menu-selections:
 	sandwich=$(sandwich)
 	peppers=$(peppers)
 	tomatoes=$(tomatoes)
-	onions3020=$(onions3020)
-	onions3021=$(onions3021)
+	onions=$(onions)
 	chips=$(chips)
 	pickle=$(pickle)
 	cookie=$(cookie)
@@ -476,8 +475,14 @@ post-payment: get-payment-info
 	:
 
 # This target clicks the "Submit" button
+submit-order: export METHOD=$(POST)
 submit-order:
-	$(cURL) $(cURL_OPTS) $(BASE)/api/Order/Submit/
+	cat <<: | $(cURL) $(METHOD) $(cURL_OPTS) $(BASE)/api/Order/Submit/
+	{
+		"SaveAsInstantOrder" : false,
+		"CvvNumber" : ""
+	}
+	:
 
 
 ################################################################################
@@ -495,28 +500,28 @@ define SANDWICH_IDS
 endef
 
 define SANDWICH_JSON
-      "IsSizeFixed" : false,
-      "MustEdit" : false,
-      "MenuItemText" : "",
-      "MenuItemId" : "$(sandwich)",
-      "IsQuantityFixed" : false,
-      "CouponReference" : "",
-      "CanEdit" : false,
-      "IsPriceFixed" : false,
-      "SelectedSize" : "Regular",
-      "DisplayPrice" : "",
-      "DisplayText" : "",
-      "IsMainCouponItem" : false,
-      "ConfirmedSprouts" : false,
-      "Label" : "",
       "Index" : "",
-      "Quantity" : 1,
       "ItemCost" : 0,
-      "NoMayo" : false,
-      "CanDelete" : false,
-      "RewardNotes" : "",
-      "FavoriteName" : "",
+      "Label" : "$(CONTACT_FIRSTNAME) $(CONTACT_LASTNAME)",
       "ExtendedPrice" : 0,
+      "IsMainCouponItem" : false,
+      "DisplayText" : "",
+      "FavoriteName" : "",
+      "CanDelete" : false,
+      "IsSizeFixed" : false,
+      "ConfirmedSprouts" : false,
+      "MenuItemId" : "$(sandwich)",
+      "DisplayPrice" : "",
+      "MenuItemText" : "",
+      "IsQuantityFixed" : false,
+      "MustEdit" : false,
+      "IsPriceFixed" : false,
+      "NoMayo" : false,
+      "Quantity" : 1,
+      "SelectedSize" : "Regular",
+      "CouponReference" : "",
+      "RewardNotes" : "",
+      "CanEdit" : false,
       "Modifiers" : [
          {
 			 "EditItem" : false,
@@ -532,20 +537,8 @@ define SANDWICH_JSON
          },
          {
             "EditItem" : false,
-            "GroupId" : "3021",
-            "SelectedAnswerId" : "$(onions3021)",
-            "SelectedAnswerText" : ""
-         },
-         {
-            "EditItem" : false,
             "GroupId" : "3020",
-            "SelectedAnswerId" : "$(onions3020)",
-            "SelectedAnswerText" : ""
-         },
-         {
-            "EditItem" : false,
-            "GroupId" : "3892",
-            "SelectedAnswerId" : "$(leave-bread-in)",
+            "SelectedAnswerId" : "$(onions)",
             "SelectedAnswerText" : ""
          },
          {
@@ -573,7 +566,7 @@ prompt-sandwich:
 	:
 
 choose-sandwich:
-	@$(eval sandwich = $(shell $(MAKE) choose-sandwich-recurse))
+	@$(eval sandwich = $(word $(shell $(MAKE) choose-sandwich-recurse), $(SANDWICH_IDS)))
 
 choose-sandwich-recurse:
 	@$(eval sandwich = $(shell read -p 'sandwich> '; echo $$REPLY))
@@ -589,7 +582,8 @@ cut-in-half = 0
 customize-sandwich: pc-tomatoes pc-onions pc-peppers
 
 
-## Tomatoes - the default is Regular Tomatoes
+## Tomatoes - menu group #2998
+# the default is Regular Tomatoes
 tomatoes = 23258
 
 define TOMATOES_IDS
@@ -620,16 +614,12 @@ choose-tomatoes-recurse:
 	@$(info $(tomatoes))
 
 
-## Onions - the default is No Onions
-onions3021 = 23559
-onions3020 = 23311
+## Onions - menu group #3020
+# the default is Regular Onions
+onions = 23801
 
-define ONIONS3021_IDS
-	23559 23314 23312 23315
-endef
-
-define ONIONS3020_IDS
-	23311 23314 23313 23315
+define ONIONS_IDS
+	23311 23801 23313 23802
 endef
 
 onions-opts = 1 2 3 4
@@ -645,10 +635,7 @@ prompt-onions:
 	:
 
 choose-onions:
-	@$(eval onions = $(shell $(MAKE) choose-onions-recurse))
-	@$(eval onions3020 = $(word $(onions), $(ONIONS3020_IDS)))
-	@$(eval onions3021 = $(word $(onions), $(ONIONS3021_IDS)))
-
+	@$(eval onions = $(word $(shell $(MAKE) choose-onions-recurse), $(ONIONS_IDS)))
 
 choose-onions-recurse:
 	@$(eval onions = $(firstword $(shell read -p 'onions> '; echo $$REPLY)))
@@ -659,7 +646,8 @@ choose-onions-recurse:
 	@$(info $(onions))
 
 
-## Hot Cherry Peppers - the default is No Peppers
+## Hot Cherry Peppers - menu group #3895
+# the default is No Peppers
 peppers = 23557
 
 define PEPPERS_IDS
@@ -1069,7 +1057,7 @@ api-query-LOCATIONS: api-query-LAT_LNG
 # Geocode delivery address via the Maps API provided by Google
 api-query-LAT_LNG:
 	@$(if $(and $(LAT), $(LNG)), ,
-	@ $(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_ADDR2) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
+	@ $(eval ADDR_FOR_GEOCODE = $(shell echo $(DELIV_ADDR1) $(DELIV_CITY) $(DELIV_STATE) $(DELIV_ZIP) | tr ' ' +))
 	@ $(eval LATLNG = $(shell $(cURL) $(cURL_BASIC_OPTS) $(GEOCODE)$(ADDR_FOR_GEOCODE) | sed -e 's/[,{}]/\n/g' -e 's/:/ /g' | awk '
 	@ {
 	@     if (lat && lng)  { print lat " " lng;              exit }
